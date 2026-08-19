@@ -1,9 +1,16 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { BackIcon, HeartIcon, ShareIcon } from '../../../art/Icons'
 import { Sparkle } from '../../../art/KeyringArt'
-import { DEFAULT_SPECS, formatPrice, type Product } from '../../../data/products'
+import {
+  DEFAULT_SPECS,
+  formatPrice,
+  getProduct,
+  shortNameOf,
+  type Product,
+} from '../../../data/products'
 import { assetPath } from '../../../lib/assetPath'
 import { useAppStore } from '../../../store/AppStore'
 import { ProductThumb } from '../../../components/ProductThumb'
@@ -95,6 +102,39 @@ export function ProductDetail({ product }: { product: Product }) {
           ))}
         </div>
 
+        {product.items && product.items.length > 0 && (
+          <>
+            <p className="option-title">세트 구성</p>
+            <ul className="set-items">
+              {product.items.map((item, i) => {
+                const source = item.productId ? getProduct(item.productId) : undefined
+                const name = source ? shortNameOf(source) : item.name
+                const photo = source?.photo ?? item.photo
+                const body = (
+                  <>
+                    <span className="set-items__thumb">
+                      {photo && <img src={assetPath(photo)} alt="" />}
+                    </span>
+                    <span className="set-items__name">{name}</span>
+                    {item.note && <span className="set-items__note">{item.note}</span>}
+                  </>
+                )
+                return (
+                  <li key={item.productId ?? item.name ?? i}>
+                    {source ? (
+                      <Link href={`/product/${source.id}`} className="set-items__cell">
+                        {body}
+                      </Link>
+                    ) : (
+                      <span className="set-items__cell">{body}</span>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          </>
+        )}
+
         <p className="detail-note">
           정식 오픈 전 사전예약 상품이에요. 예약하시면 오픈 소식을 가장 먼저 알려드려요!
         </p>
@@ -110,6 +150,9 @@ export function ProductDetail({ product }: { product: Product }) {
             src={assetPath(product.detailImage)}
             alt={`${product.name} 상세 정보`}
           />
+          {product.detailCaption && (
+            <p className="detail-figure__caption">{product.detailCaption}</p>
+          )}
         </section>
       )}
 
