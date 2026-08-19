@@ -7,8 +7,8 @@ const POSTER = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/intro-poster.webp`
 
 /**
  * 첫 진입 시 화면 전체를 덮는 포스터 인트로.
- * 포스터(4:5)가 폰 화면보다 넓어 잘리지 않도록, 같은 이미지를 블러로 확대해
- * 배경을 채우고 그 위에 원본을 온전히 얹는다. 세션당 1회만 노출.
+ * 포스터를 화면 하단에 붙이고, 남는 영역은 포스터 상단과 동일한
+ * 배경색으로 채워 이어져 보이게 한다. 세션당 1회만 노출.
  */
 export function SplashIntro() {
   const [visible, setVisible] = useState(true)
@@ -36,8 +36,7 @@ export function SplashIntro() {
 
   return (
     <div className={`splash${leaving ? ' splash--leaving' : ''}`} role="dialog" aria-label="Keyring Studio 인트로">
-      <img className="splash__bg" src={POSTER} alt="" aria-hidden />
-      <img className="splash__poster" src={POSTER} alt="아크릴 키링 — 귀여운 사자 캐릭터 & 소품 시리즈 홍보 포스터" />
+      <img className="splash__poster" src={POSTER} alt="아크릴 키링 — 귀여운 사자 캐릭터 홍보 포스터" />
       <div className="splash__bottom">
         <button className="button-primary splash__enter" onClick={dismiss}>
           구경하러 가기
