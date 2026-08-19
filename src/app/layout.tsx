@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import type { ReactNode } from 'react'
 import { AppStoreProvider } from '../store/AppStore'
 import { BottomNav } from '../components/BottomNav'
+import { DisableZoom } from '../components/DisableZoom'
 import '../styles/global.css'
 
 const base = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
@@ -40,6 +41,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  // 앱처럼 보이도록 확대/축소를 막는다
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: 'cover',
   themeColor: '#ffffff',
 }
@@ -48,6 +52,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ko">
       <body>
+        <DisableZoom />
         <AppStoreProvider>
           <div className="app-shell">{children}</div>
           <BottomNav />
