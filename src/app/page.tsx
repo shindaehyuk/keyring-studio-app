@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Countdown } from '../components/Countdown'
 import { HeroBanner } from '../components/HeroBanner'
 import { ProductCard } from '../components/ProductCard'
+import { SplashIntro } from '../components/SplashIntro'
 import { BENEFITS } from '../data/site'
 import { PRODUCTS } from '../data/products'
 
@@ -10,6 +11,7 @@ export default function LandingPage() {
 
   return (
     <div className="page">
+      <SplashIntro />
       <header className="page-header">
         <h1 className="page-header__title">Keyring Studio</h1>
         <Link href="/reserve" className="header-pill">

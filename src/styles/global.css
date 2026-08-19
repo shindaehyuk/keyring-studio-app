@@ -1270,3 +1270,63 @@ svg {
   color: var(--color-faint);
   text-decoration: underline;
 }
+
+/* ---------- 진입 인트로 (포스터 스플래시) ---------- */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  margin: 0 auto;
+  max-width: 430px;
+  overflow: hidden;
+  background: #fdf3e3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: splash-in 0.4s ease;
+  transition: opacity 0.35s ease;
+}
+
+.splash--leaving {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.splash__bg {
+  position: absolute;
+  inset: -40px;
+  width: calc(100% + 80px);
+  height: calc(100% + 80px);
+  object-fit: cover;
+  filter: blur(26px) saturate(1.05);
+  transform: scale(1.1);
+}
+
+.splash__poster {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.splash__bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 48px 24px calc(24px + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(60, 42, 20, 0.45), rgba(60, 42, 20, 0));
+}
+
+.splash__enter {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+}
+
+@keyframes splash-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
