@@ -48,10 +48,17 @@ export const viewport: Viewport = {
   themeColor: '#ffffff',
 }
 
+/**
+ * 첫 페인트 전에 동기 실행되어, 이미 인트로를 본 세션이면 <html>에 표시를 남긴다.
+ * CSS가 이 표시를 보고 인트로를 즉시 감추므로 새로고침 때 번쩍이지 않는다.
+ */
+const INTRO_FLAG_SCRIPT = `try{if(sessionStorage.getItem('ks:intro-seen'))document.documentElement.setAttribute('data-intro-seen','1')}catch(e){}`
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ko">
       <body>
+        <script dangerouslySetInnerHTML={{ __html: INTRO_FLAG_SCRIPT }} />
         <DisableZoom />
         <AppStoreProvider>
           <div className="app-shell">{children}</div>

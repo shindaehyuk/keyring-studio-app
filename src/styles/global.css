@@ -1284,6 +1284,11 @@ svg {
   pointer-events: none;
 }
 
+/* 이미 인트로를 본 세션 — 첫 페인트부터 감춰 새로고침 시 번쩍임을 막는다 */
+html[data-intro-seen='1'] .splash {
+  display: none;
+}
+
 .splash__poster {
   width: 100%;
   height: auto;
