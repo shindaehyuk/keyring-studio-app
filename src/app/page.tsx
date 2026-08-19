@@ -13,7 +13,7 @@ export default function LandingPage() {
     <div className="page">
       <SplashIntro />
       <header className="page-header">
-        <h1 className="page-header__title">Keyring Studio</h1>
+        <h1 className="page-header__title">SuwonYouth</h1>
         <Link href="/reserve" className="header-pill">
           사전예약
         </Link>
@@ -70,7 +70,7 @@ export default function LandingPage() {
       </section>
 
       <footer className="site-footer">
-        <p className="site-footer__logo">Keyring Studio</p>
+        <p className="site-footer__logo">SuwonYouth</p>
         <p>
           문의 hello@keyringstudio.kr
           <br />
