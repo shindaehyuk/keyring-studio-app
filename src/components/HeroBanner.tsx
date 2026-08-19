@@ -1,85 +1,80 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
-import { KeyringArt, type ArtId } from '../art/KeyringArt'
+import { useEffect, useRef, useState } from 'react'
+import { assetPath } from '../lib/assetPath'
 
-const HERO_SLIDES: {
-  label: string
-  title: string
-  desc: string
-  bg: string
-  arts: readonly ArtId[]
-}[] = [
-  {
-    label: 'COMING SOON',
-    title: '키링 친구들\n곧 만나요!',
-    desc: '귀여운 아크릴 키링 컬렉션,\n지금 사전예약하고 먼저 만나보세요.',
-    bg: 'var(--color-lavender)',
-    arts: ['heart', 'cloud', 'star'],
-  },
-  {
-    label: 'SEASON LIMITED',
-    title: '여름 한정\n체리 키링',
-    desc: '이번 시즌에만 만날 수 있는\n상큼한 디자인이에요.',
-    bg: 'var(--color-pink)',
-    arts: ['cherry', 'ribbon'],
-  },
-  {
-    label: 'PRE-ORDER GIFT',
-    title: '예약하면\n스티커 증정',
-    desc: '사전예약자 전원에게\n한정 스티커 세트를 드려요.',
-    bg: 'var(--color-cream)',
-    arts: ['rabbit', 'star'],
-  },
-  {
-    label: 'CUSTOM',
-    title: '이니셜 키링\n주문 제작',
-    desc: '나만의 알파벳으로\n특별한 키링을 만들어보세요.',
-    bg: 'var(--color-mint)',
-    arts: ['initial', 'flower'],
-  },
+const SLIDES = [
+  { image: '/banner-lion-1.webp', alt: 'LION KEYRING — 사랑스러운 아크릴 키링', href: '/collection' },
+  { image: '/banner-lion-2.webp', alt: 'LION KEYRING — 귀여운 사자 키링 컬렉션', href: '/collection' },
 ]
 
-export function HeroBanner() {
-  const [slide, setSlide] = useState(0)
+const AUTOPLAY_MS = 4000
+/** 사용자가 직접 넘긴 뒤 이만큼은 자동 전환을 쉬어 간섭하지 않는다 */
+const RESUME_DELAY_MS = 6000
 
+export function HeroBanner() {
+  const trackRef = useRef<HTMLDivElement>(null)
+  const lastTouchedRef = useRef(0)
+  const [index, setIndex] = useState(0)
+
+  // 자동 전환 — 스크롤 위치를 직접 옮겨 스와이프와 상태를 공유한다
   useEffect(() => {
+    if (SLIDES.length < 2) return
     const timer = window.setInterval(() => {
-      setSlide((s) => (s + 1) % HERO_SLIDES.length)
-    }, 4000)
+      const el = trackRef.current
+      if (!el) return
+      if (Date.now() - lastTouchedRef.current < RESUME_DELAY_MS) return
+      const current = Math.round(el.scrollLeft / el.clientWidth)
+      const next = (current + 1) % SLIDES.length
+      el.scrollTo({ left: next * el.clientWidth, behavior: 'smooth' })
+    }, AUTOPLAY_MS)
     return () => window.clearInterval(timer)
   }, [])
 
-  const hero = HERO_SLIDES[slide]
+  const handleScroll = () => {
+    const el = trackRef.current
+    if (!el) return
+    setIndex(Math.round(el.scrollLeft / el.clientWidth))
+  }
+
+  const goTo = (i: number) => {
+    const el = trackRef.current
+    if (!el) return
+    lastTouchedRef.current = Date.now()
+    el.scrollTo({ left: i * el.clientWidth, behavior: 'smooth' })
+  }
 
   return (
     <section className="hero">
-      <div className="hero__card" style={{ background: hero.bg }}>
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <p className="hero__label">{hero.label}</p>
-          <h2 className="hero__title">{hero.title}</h2>
-          <p className="hero__desc">{hero.desc}</p>
-          <Link href="/reserve" className="hero__cta">
-            사전예약하기
+      <div
+        className="hero__track"
+        ref={trackRef}
+        onScroll={handleScroll}
+        onPointerDown={() => {
+          lastTouchedRef.current = Date.now()
+        }}
+      >
+        {SLIDES.map((slide) => (
+          <Link key={slide.image} href={slide.href} className="hero__slide">
+            <img className="hero__image" src={assetPath(slide.image)} alt={slide.alt} />
           </Link>
-        </div>
-        <div className="hero__art" style={{ display: 'flex', gap: 4 }}>
-          {hero.arts.map((art, i) => (
-            <KeyringArt key={art} art={art} style={{ width: 62, marginTop: i % 2 === 1 ? 18 : 0 }} />
-          ))}
-        </div>
+        ))}
+      </div>
+
+      {SLIDES.length > 1 && (
         <div className="hero__dots">
-          {HERO_SLIDES.map((_, i) => (
+          {SLIDES.map((slide, i) => (
             <button
-              key={i}
-              className={`dot${i === slide ? ' active' : ''}`}
+              key={slide.image}
+              className={`dot${i === index ? ' active' : ''}`}
               aria-label={`배너 ${i + 1}`}
-              onClick={() => setSlide(i)}
+              aria-current={i === index}
+              onClick={() => goTo(i)}
             />
           ))}
         </div>
-      </div>
+      )}
     </section>
   )
 }

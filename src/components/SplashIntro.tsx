@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { assetPath } from '../lib/assetPath'
 
 const SEEN_KEY = 'ks:intro-seen'
-const POSTER = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/intro-poster.webp`
+const POSTER = assetPath('/intro-poster.webp')
 
 /**
  * 첫 진입 시 화면 전체를 덮는 포스터 인트로.
@@ -35,7 +36,7 @@ export function SplashIntro() {
   if (!visible) return null
 
   return (
-    <div className={`splash${leaving ? ' splash--leaving' : ''}`} role="dialog" aria-label="Keyring Studio 인트로">
+    <div className={`splash${leaving ? ' splash--leaving' : ''}`} role="dialog" aria-label="SuwonYouth 인트로">
       <img className="splash__poster" src={POSTER} alt="아크릴 키링 — 귀여운 사자 캐릭터 홍보 포스터" />
       <div className="splash__bottom">
         <button className="button-primary splash__enter" onClick={dismiss}>

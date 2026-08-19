@@ -86,7 +86,7 @@ export function ReserveForm() {
             관심 있는 키링 <em className="field__hint">(복수 선택 가능)</em>
           </span>
           <ul className="pick-grid">
-            {PRODUCTS.map((product) => {
+            {PRODUCTS.filter((product) => !product.comingSoon).map((product) => {
               const picked = selected.includes(product.id)
               return (
                 <li key={product.id}>

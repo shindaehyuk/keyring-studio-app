@@ -3,10 +3,11 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { BackIcon, HeartIcon, ShareIcon } from '../../../art/Icons'
-import { KeyringArt, Sparkle } from '../../../art/KeyringArt'
+import { Sparkle } from '../../../art/KeyringArt'
 import { DEFAULT_SPECS, formatPrice, type Product } from '../../../data/products'
 import { assetPath } from '../../../lib/assetPath'
 import { useAppStore } from '../../../store/AppStore'
+import { ProductThumb } from '../../../components/ProductThumb'
 
 const SLIDE_COUNT = 4
 
@@ -20,7 +21,7 @@ export function ProductDetail({ product }: { product: Product }) {
     const url = window.location.href
     try {
       if (navigator.share) {
-        await navigator.share({ title: `${product.name} | Keyring Studio`, url })
+        await navigator.share({ title: `${product.name} | SuwonYouth`, url })
         return
       }
       await navigator.clipboard.writeText(url)
@@ -58,7 +59,7 @@ export function ProductDetail({ product }: { product: Product }) {
         <div
           className="detail-hero"
           style={{ background: product.bg }}
-          onClick={() => setSlide((s) => (s + 1) % SLIDE_COUNT)}
+          onClick={product.comingSoon ? undefined : () => setSlide((s) => (s + 1) % SLIDE_COUNT)}
         >
           <svg
             viewBox="0 0 120 170"
@@ -70,21 +71,27 @@ export function ProductDetail({ product }: { product: Product }) {
             <Sparkle x={10} y={140} size={4} color="#ffffff" />
             <Sparkle x={110} y={130} size={5} color="#ffffff" />
           </svg>
-          <KeyringArt art={product.art} className="detail-art" />
-          <div className="detail-hero__dots">
-            {Array.from({ length: SLIDE_COUNT }).map((_, i) => (
-              <span key={i} className={`dot${i === slide ? ' active' : ''}`} />
-            ))}
-          </div>
+          <ProductThumb product={product} className="detail-art" />
+          {!product.comingSoon && (
+            <div className="detail-hero__dots">
+              {Array.from({ length: SLIDE_COUNT }).map((_, i) => (
+                <span key={i} className={`dot${i === slide ? ' active' : ''}`} />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
       <div className={`detail-body${product.detailImage ? ' detail-body--with-figure' : ''}`}>
         <h1 className="detail-body__name">{product.name}</h1>
-        <p className="detail-body__price">
-          <span className="detail-body__price-label">사전예약가</span>
-          {formatPrice(product.price)}
-        </p>
+        {product.comingSoon ? (
+          <p className="detail-body__price detail-body__price--soon">가격 준비 중</p>
+        ) : (
+          <p className="detail-body__price">
+            <span className="detail-body__price-label">사전예약가</span>
+            {formatPrice(product.price)}
+          </p>
+        )}
         <p className="detail-body__desc">
           {product.description.map((line) => (
             <span key={line}>
@@ -94,18 +101,24 @@ export function ProductDetail({ product }: { product: Product }) {
           ))}
         </p>
 
-        <p className="option-title">굿즈 정보</p>
-        <div className="option-card">
-          {(product.specs ?? DEFAULT_SPECS).map((spec) => (
-            <div key={spec.label} className="option-row">
-              <span className="option-row__label">{spec.label}</span>
-              <span className="option-row__value">{spec.value}</span>
+        {!product.comingSoon && (
+          <>
+            <p className="option-title">굿즈 정보</p>
+            <div className="option-card">
+              {(product.specs ?? DEFAULT_SPECS).map((spec) => (
+                <div key={spec.label} className="option-row">
+                  <span className="option-row__label">{spec.label}</span>
+                  <span className="option-row__value">{spec.value}</span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        )}
 
         <p className="detail-note">
-          정식 오픈 전 사전예약 상품이에요. 예약하시면 오픈 소식과 혜택을 가장 먼저 알려드려요!
+          {product.comingSoon
+            ? '아직 준비 중인 상품이에요. 관심 굿즈에 담아두시면 공개 소식을 가장 먼저 알려드릴게요!'
+            : '정식 오픈 전 사전예약 상품이에요. 예약하시면 오픈 소식과 혜택을 가장 먼저 알려드려요!'}
         </p>
       </div>
 
@@ -138,9 +151,15 @@ export function ProductDetail({ product }: { product: Product }) {
         >
           <HeartIcon size={20} color={liked ? 'var(--color-accent)' : 'currentColor'} filled={liked} />
         </button>
-        <button className="button-primary" onClick={() => router.push(`/reserve?p=${product.id}`)}>
-          사전예약하기
-        </button>
+        {product.comingSoon ? (
+          <button className="button-primary" disabled>
+            준비 중이에요
+          </button>
+        ) : (
+          <button className="button-primary" onClick={() => router.push(`/reserve?p=${product.id}`)}>
+            사전예약하기
+          </button>
+        )}
       </div>
     </div>
   )

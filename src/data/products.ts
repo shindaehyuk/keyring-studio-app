@@ -1,6 +1,6 @@
 import type { ArtId } from '../art/KeyringArt'
 
-export type CategoryId = 'character' | 'simple' | 'initial' | 'pastel' | 'season'
+export type CategoryId = 'keyring' | 'tshirt'
 
 export interface Category {
   id: CategoryId
@@ -8,11 +8,8 @@ export interface Category {
 }
 
 export const CATEGORIES: Category[] = [
-  { id: 'character', label: '캐릭터' },
-  { id: 'simple', label: '심플' },
-  { id: 'initial', label: '이니셜' },
-  { id: 'pastel', label: '파스텔' },
-  { id: 'season', label: '시즌 한정' },
+  { id: 'keyring', label: '키링' },
+  { id: 'tshirt', label: '티셔츠' },
 ]
 
 export const KEYRING_TYPES = ['기본 고리', '고리형', '체인형'] as const
@@ -31,14 +28,16 @@ export interface Product {
   description: string[]
   category: CategoryId
   bg: string
-  /** SVG 일러스트 — photo가 없는 상품의 대표 이미지 */
-  art: ArtId
+  /** SVG 일러스트 식별자 — photo가 없는 키링 상품의 대표 이미지 */
+  art?: ArtId
   /** 실물 촬영 사진 (카드 썸네일·상세 상단). 있으면 art 대신 사용 */
   photo?: string
   /** 세로로 긴 상세 설명 이미지 (상세 페이지 하단) */
   detailImage?: string
   /** 굿즈 정보 표. 없으면 기본값 사용 */
   specs?: Spec[]
+  /** 아직 정보가 공개되지 않은 준비 중 상품 — 가격·예약 대신 '준비 중'으로 표시 */
+  comingSoon?: boolean
   isNew?: boolean
   popular?: boolean
 }
@@ -49,19 +48,17 @@ export const DEFAULT_SPECS: Spec[] = [
   { label: '키링 타입', value: KEYRING_TYPES.join(' · ') },
 ]
 
+const LION_SET_DESC = ['하나의 D링에 두 가지 참이 달린 키링이에요.']
+
 export const PRODUCTS: Product[] = [
   {
     id: 'sponge-lion',
     name: '사자와 수세미 아크릴 키링',
     shortName: '사자와 수세미',
     price: 12900,
-    description: [
-      '귀여운 사자와 수세미가 한 세트!',
-      '하나의 D링에 두 가지 참이 달린 키링이에요.',
-    ],
-    category: 'character',
+    description: ['귀여운 사자와 수세미가 한 세트!', ...LION_SET_DESC],
+    category: 'keyring',
     bg: 'var(--color-lavender)',
-    art: 'rabbit',
     photo: '/sponge-lion.webp',
     detailImage: '/sponge-lion-detail.webp',
     specs: [
@@ -78,13 +75,9 @@ export const PRODUCTS: Product[] = [
     name: '사자와 주걱 아크릴 키링',
     shortName: '사자와 주걱',
     price: 12900,
-    description: [
-      '귀여운 사자와 주걱이 한 세트!',
-      '하나의 D링에 두 가지 참이 달린 키링이에요.',
-    ],
-    category: 'character',
+    description: ['귀여운 사자와 주걱이 한 세트!', ...LION_SET_DESC],
+    category: 'keyring',
     bg: 'var(--color-pink)',
-    art: 'rabbit',
     photo: '/spatula-lion.webp',
     detailImage: '/spatula-lion-detail.webp',
     specs: [
@@ -101,13 +94,9 @@ export const PRODUCTS: Product[] = [
     name: '사자와 커피 아크릴 키링',
     shortName: '사자와 커피',
     price: 12900,
-    description: [
-      '귀여운 사자와 커피가 한 세트!',
-      '하나의 D링에 두 가지 참이 달린 키링이에요.',
-    ],
-    category: 'character',
+    description: ['귀여운 사자와 커피가 한 세트!', ...LION_SET_DESC],
+    category: 'keyring',
     bg: 'var(--color-cream)',
-    art: 'rabbit',
     photo: '/coffee-lion.webp',
     detailImage: '/coffee-lion-detail.webp',
     specs: [
@@ -124,13 +113,9 @@ export const PRODUCTS: Product[] = [
     name: '사자와 회오리감자 아크릴 키링',
     shortName: '사자와 회오리감자',
     price: 12900,
-    description: [
-      '귀여운 사자와 회오리감자가 한 세트!',
-      '하나의 D링에 두 가지 참이 달린 키링이에요.',
-    ],
-    category: 'character',
+    description: ['귀여운 사자와 회오리감자가 한 세트!', ...LION_SET_DESC],
+    category: 'keyring',
     bg: 'var(--color-cream)',
-    art: 'rabbit',
     photo: '/snack-lion.webp',
     detailImage: '/snack-lion-detail.webp',
     specs: [
@@ -147,13 +132,9 @@ export const PRODUCTS: Product[] = [
     name: '사자와 성경 아크릴 키링',
     shortName: '사자와 성경',
     price: 12900,
-    description: [
-      '귀여운 사자와 성경이 한 세트!',
-      '하나의 D링에 두 가지 참이 달린 키링이에요.',
-    ],
-    category: 'character',
+    description: ['귀여운 사자와 성경이 한 세트!', ...LION_SET_DESC],
+    category: 'keyring',
     bg: 'var(--color-cream)',
-    art: 'rabbit',
     photo: '/bible-lion.webp',
     detailImage: '/bible-lion-detail.webp',
     specs: [
@@ -165,88 +146,17 @@ export const PRODUCTS: Product[] = [
     isNew: true,
     popular: true,
   },
-  {
-    id: 'cloud',
-    name: '구름 친구 키링',
-    price: 8900,
-    description: ['폭신한 구름을 닮은 귀여운 키링이에요.', '가방, 파우치, 열쇠 어디든 잘 어울려요!'],
-    category: 'character',
-    bg: 'var(--color-lavender)',
-    art: 'cloud',
-    isNew: true,
-    popular: true,
-  },
-  {
-    id: 'rabbit',
-    name: '토끼 친구 키링',
-    price: 8900,
-    description: ['쫑긋한 귀가 매력적인 토끼 키링이에요.', '보고만 있어도 기분이 좋아져요!'],
-    category: 'character',
+
+  // ---- 티셔츠: 디자인·가격 확정 전 자리만 잡아둔 상품 ----
+  ...([1, 2, 3] as const).map<Product>((n) => ({
+    id: `tshirt-${n}`,
+    name: `사자 티셔츠 ${n}`,
+    price: 0,
+    description: ['곧 공개될 사자 티셔츠예요.', '오픈 소식을 가장 먼저 알려드릴게요!'],
+    category: 'tshirt' as const,
     bg: 'var(--color-mint)',
-    art: 'rabbit',
-    popular: true,
-  },
-  {
-    id: 'star',
-    name: '별 친구 키링',
-    price: 8900,
-    description: ['반짝반짝 웃고 있는 별 키링이에요.', '나만의 작은 행운을 데리고 다녀보세요!'],
-    category: 'character',
-    bg: 'var(--color-cream)',
-    art: 'star',
-    isNew: true,
-    popular: true,
-  },
-  {
-    id: 'heart',
-    name: '하트 키링',
-    price: 7900,
-    description: ['심플한 하트 디자인의 키링이에요.', '사랑스러운 포인트로 제격이에요!'],
-    category: 'simple',
-    bg: 'var(--color-pink)',
-    art: 'heart',
-    isNew: true,
-    popular: true,
-  },
-  {
-    id: 'flower',
-    name: '데이지 키링',
-    price: 7900,
-    description: ['하얀 데이지 꽃을 담은 파스텔 키링이에요.', '봄 감성을 언제나 곁에 두세요!'],
-    category: 'pastel',
-    bg: 'var(--color-blue)',
-    art: 'flower',
-    popular: true,
-  },
-  {
-    id: 'ribbon',
-    name: '리본 키링',
-    price: 8500,
-    description: ['달콤한 핑크 리본 키링이에요.', '선물 같은 하루를 만들어줄 거예요!'],
-    category: 'simple',
-    bg: 'var(--color-lavender)',
-    art: 'ribbon',
-    popular: true,
-  },
-  {
-    id: 'cherry',
-    name: '체리 키링',
-    price: 9500,
-    description: ['상큼한 체리 한 쌍을 담은 시즌 한정 키링이에요.', '여름 시즌에만 만나볼 수 있어요!'],
-    category: 'season',
-    bg: 'var(--color-pink)',
-    art: 'cherry',
-    isNew: true,
-  },
-  {
-    id: 'initial-k',
-    name: '이니셜 키링',
-    price: 9900,
-    description: ['원하는 알파벳을 담을 수 있는 이니셜 키링이에요.', '나만의 특별한 키링을 만들어보세요!'],
-    category: 'initial',
-    bg: 'var(--color-cream)',
-    art: 'initial',
-  },
+    comingSoon: true,
+  })),
 ]
 
 export const getProduct = (id: string) => PRODUCTS.find((p) => p.id === id)
