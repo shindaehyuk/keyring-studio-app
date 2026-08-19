@@ -1333,3 +1333,53 @@ svg {
     opacity: 1;
   }
 }
+
+/* ---------- 실물 사진 상품 ---------- */
+/* img일 때는 컨테이너를 꽉 채우고, svg일 때는 기존 비율 규칙을 따른다 */
+img.product-card__media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+img.pick-card__media,
+img.reservation-card__media {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* 한글 이름이 단어 중간에서 잘리지 않도록 */
+.pick-card {
+  height: 100%;
+}
+
+.pick-card__name {
+  word-break: keep-all;
+}
+
+.detail-hero--photo {
+  background: var(--color-bg);
+  aspect-ratio: 1;
+}
+
+.detail-hero__photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 상세 설명 이미지가 이어질 때는 본문 하단 여백을 줄인다 */
+.detail-body--with-figure {
+  padding-bottom: 8px;
+}
+
+.detail-figure {
+  padding-bottom: 130px;
+}
+
+.detail-figure__image {
+  width: 100%;
+  height: auto;
+  margin-top: 4px;
+}

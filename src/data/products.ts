@@ -17,19 +17,62 @@ export const CATEGORIES: Category[] = [
 
 export const KEYRING_TYPES = ['기본 고리', '고리형', '체인형'] as const
 
+export interface Spec {
+  label: string
+  value: string
+}
+
 export interface Product {
   id: string
   name: string
+  /** 카드·픽커에 쓰는 짧은 이름. 없으면 name에서 '키링'을 뗀 값 */
+  shortName?: string
   price: number
   description: string[]
   category: CategoryId
   bg: string
+  /** SVG 일러스트 — photo가 없는 상품의 대표 이미지 */
   art: ArtId
+  /** 실물 촬영 사진 (카드 썸네일·상세 상단). 있으면 art 대신 사용 */
+  photo?: string
+  /** 세로로 긴 상세 설명 이미지 (상세 페이지 하단) */
+  detailImage?: string
+  /** 굿즈 정보 표. 없으면 기본값 사용 */
+  specs?: Spec[]
   isNew?: boolean
   popular?: boolean
 }
 
+export const DEFAULT_SPECS: Spec[] = [
+  { label: '사이즈', value: '약 5cm (키링 제외)' },
+  { label: '재질', value: '아크릴 3T + 홀로그램 코팅' },
+  { label: '키링 타입', value: KEYRING_TYPES.join(' · ') },
+]
+
 export const PRODUCTS: Product[] = [
+  {
+    id: 'sponge-lion',
+    name: '사자와 수세미 아크릴 키링',
+    shortName: '사자와 수세미',
+    price: 12900,
+    description: [
+      '귀여운 사자와 수세미가 한 세트!',
+      '하나의 D링에 두 가지 참이 달린 키링이에요.',
+    ],
+    category: 'character',
+    bg: 'var(--color-lavender)',
+    art: 'rabbit',
+    photo: '/sponge-lion.webp',
+    detailImage: '/sponge-lion-detail.webp',
+    specs: [
+      { label: '사이즈', value: '사자 46×44mm · 수세미 26×24mm' },
+      { label: '재질', value: '투명하고 튼튼한 아크릴' },
+      { label: '구성', value: '2종 세트 (사자 + 수세미)' },
+      { label: '키링 타입', value: '열고 닫기 쉬운 D링' },
+    ],
+    isNew: true,
+    popular: true,
+  },
   {
     id: 'cloud',
     name: '구름 친구 키링',
@@ -115,5 +158,8 @@ export const PRODUCTS: Product[] = [
 ]
 
 export const getProduct = (id: string) => PRODUCTS.find((p) => p.id === id)
+
+export const shortNameOf = (product: Product) =>
+  product.shortName ?? product.name.replace(' 키링', '')
 
 export const formatPrice = (won: number) => `${won.toLocaleString('ko-KR')}원`

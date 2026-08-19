@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { KeyringArt } from '../../../art/KeyringArt'
 import { BENEFITS } from '../../../data/site'
-import { getProduct } from '../../../data/products'
+import { getProduct, shortNameOf } from '../../../data/products'
 import { useAppStore } from '../../../store/AppStore'
 
 export function DoneView() {
@@ -35,7 +35,7 @@ export function DoneView() {
               <span>예약 굿즈</span>
               <strong>
                 {reservation.productIds
-                  .map((id) => getProduct(id)?.name.replace(' 키링', ''))
+                  .map((id) => { const p = getProduct(id); return p && shortNameOf(p) })
                   .filter(Boolean)
                   .join(', ')}
               </strong>
