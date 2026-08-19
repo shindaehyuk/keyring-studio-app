@@ -1,6 +1,6 @@
 import type { ArtId } from '../art/KeyringArt'
 
-export type CategoryId = 'keyring' | 'tshirt'
+export type CategoryId = 'keyring' | 'tshirt' | 'set'
 
 export interface Category {
   id: CategoryId
@@ -10,6 +10,7 @@ export interface Category {
 export const CATEGORIES: Category[] = [
   { id: 'keyring', label: '키링' },
   { id: 'tshirt', label: '티셔츠' },
+  { id: 'set', label: '세트상품' },
 ]
 
 export const KEYRING_TYPES = ['기본 고리', '고리형', '체인형'] as const
@@ -25,6 +26,8 @@ export interface Product {
   /** 카드·픽커에 쓰는 짧은 이름. 없으면 name에서 '키링'을 뗀 값 */
   shortName?: string
   price: number
+  /** 할인 전 정가. 있으면 카드·상세에 취소선으로 함께 보여준다 */
+  originalPrice?: number
   description: string[]
   category: CategoryId
   bg: string
@@ -32,12 +35,12 @@ export interface Product {
   art?: ArtId
   /** 실물 촬영 사진 (카드 썸네일·상세 상단). 있으면 art 대신 사용 */
   photo?: string
+  /** 세트 상품 썸네일 — 구성품 사진을 모아 보여준다 */
+  photos?: string[]
   /** 세로로 긴 상세 설명 이미지 (상세 페이지 하단) */
   detailImage?: string
   /** 굿즈 정보 표. 없으면 기본값 사용 */
   specs?: Spec[]
-  /** 아직 정보가 공개되지 않은 준비 중 상품 — 가격·예약 대신 '준비 중'으로 표시 */
-  comingSoon?: boolean
   isNew?: boolean
   popular?: boolean
 }
@@ -55,7 +58,7 @@ export const PRODUCTS: Product[] = [
     id: 'sponge-lion',
     name: '사자와 수세미 아크릴 키링',
     shortName: '사자와 수세미',
-    price: 12900,
+    price: 4000,
     description: ['귀여운 사자와 수세미가 한 세트!', ...LION_SET_DESC],
     category: 'keyring',
     bg: 'var(--color-lavender)',
@@ -74,7 +77,7 @@ export const PRODUCTS: Product[] = [
     id: 'spatula-lion',
     name: '사자와 주걱 아크릴 키링',
     shortName: '사자와 주걱',
-    price: 12900,
+    price: 4000,
     description: ['귀여운 사자와 주걱이 한 세트!', ...LION_SET_DESC],
     category: 'keyring',
     bg: 'var(--color-pink)',
@@ -93,7 +96,7 @@ export const PRODUCTS: Product[] = [
     id: 'coffee-lion',
     name: '사자와 커피 아크릴 키링',
     shortName: '사자와 커피',
-    price: 12900,
+    price: 4000,
     description: ['귀여운 사자와 커피가 한 세트!', ...LION_SET_DESC],
     category: 'keyring',
     bg: 'var(--color-cream)',
@@ -112,7 +115,7 @@ export const PRODUCTS: Product[] = [
     id: 'snack-lion',
     name: '사자와 회오리감자 아크릴 키링',
     shortName: '사자와 회오리감자',
-    price: 12900,
+    price: 4000,
     description: ['귀여운 사자와 회오리감자가 한 세트!', ...LION_SET_DESC],
     category: 'keyring',
     bg: 'var(--color-cream)',
@@ -131,7 +134,7 @@ export const PRODUCTS: Product[] = [
     id: 'bible-lion',
     name: '사자와 성경 아크릴 키링',
     shortName: '사자와 성경',
-    price: 12900,
+    price: 4000,
     description: ['귀여운 사자와 성경이 한 세트!', ...LION_SET_DESC],
     category: 'keyring',
     bg: 'var(--color-cream)',
@@ -147,16 +150,80 @@ export const PRODUCTS: Product[] = [
     popular: true,
   },
 
-  // ---- 티셔츠: 디자인·가격 확정 전 자리만 잡아둔 상품 ----
+  // ---- 티셔츠: 가격은 확정, 디자인은 공개 예정 ----
   ...([1, 2, 3] as const).map<Product>((n) => ({
     id: `tshirt-${n}`,
     name: `사자 티셔츠 ${n}`,
-    price: 0,
-    description: ['곧 공개될 사자 티셔츠예요.', '오픈 소식을 가장 먼저 알려드릴게요!'],
+    price: 18000,
+    description: ['사자 캐릭터를 담은 티셔츠예요.', '디자인은 곧 공개됩니다!'],
     category: 'tshirt' as const,
     bg: 'var(--color-mint)',
-    comingSoon: true,
+    specs: [
+      { label: '구성', value: '티셔츠 1개' },
+      { label: '디자인', value: '공개 예정' },
+    ],
   })),
+
+  // ---- 세트상품: 낱개로 살 때보다 저렴한 구성 ----
+  {
+    id: 'set-keyring-3',
+    name: '키링 3종 세트',
+    price: 11000,
+    originalPrice: 12000,
+    description: ['마음에 드는 키링 3개를 골라 담는 세트예요.', '낱개로 살 때보다 1,000원 저렴해요!'],
+    category: 'set',
+    bg: 'var(--color-lavender)',
+    photos: ['/sponge-lion.webp', '/coffee-lion.webp', '/bible-lion.webp'],
+    specs: [
+      { label: '구성', value: '키링 3개' },
+      { label: '낱개 가격', value: '키링 1개 4,000원' },
+      { label: '할인', value: '1,000원' },
+    ],
+    popular: true,
+  },
+  {
+    id: 'set-tshirt-nametag',
+    name: '티셔츠 + 명찰 키링 세트',
+    shortName: '티셔츠+명찰',
+    price: 21000,
+    originalPrice: 22000,
+    description: ['티셔츠 1개와 명찰 키링 1개를 함께 담은 세트예요.', '낱개로 살 때보다 1,000원 저렴해요!'],
+    category: 'set',
+    bg: 'var(--color-mint)',
+    specs: [
+      { label: '구성', value: '티셔츠 1개 + 명찰 키링 1개' },
+      { label: '낱개 가격', value: '티셔츠 18,000원 · 키링 4,000원' },
+      { label: '할인', value: '1,000원' },
+    ],
+  },
+  {
+    id: 'set-tshirt-2',
+    name: '티셔츠 2종 세트',
+    price: 35000,
+    originalPrice: 36000,
+    description: ['티셔츠 2종을 함께 담은 세트예요.', '낱개로 살 때보다 1,000원 저렴해요!'],
+    category: 'set',
+    bg: 'var(--color-cream)',
+    specs: [
+      { label: '구성', value: '티셔츠 2개' },
+      { label: '낱개 가격', value: '티셔츠 1개 18,000원' },
+      { label: '할인', value: '1,000원' },
+    ],
+  },
+  {
+    id: 'set-tshirt-3',
+    name: '티셔츠 3종 세트',
+    price: 52000,
+    originalPrice: 54000,
+    description: ['티셔츠 3종을 모두 담은 세트예요.', '낱개로 살 때보다 2,000원 저렴해요!'],
+    category: 'set',
+    bg: 'var(--color-pink)',
+    specs: [
+      { label: '구성', value: '티셔츠 3개' },
+      { label: '낱개 가격', value: '티셔츠 1개 18,000원' },
+      { label: '할인', value: '2,000원' },
+    ],
+  },
 ]
 
 export const getProduct = (id: string) => PRODUCTS.find((p) => p.id === id)

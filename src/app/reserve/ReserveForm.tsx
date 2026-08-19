@@ -26,7 +26,7 @@ export function ReserveForm() {
     e.preventDefault()
     if (!name.trim()) return showToast('이름을 입력해주세요!')
     if (!contact.trim()) return showToast('연락처를 입력해주세요!')
-    if (selected.length === 0) return showToast('키링을 하나 이상 골라주세요!')
+    if (selected.length === 0) return showToast('굿즈를 하나 이상 골라주세요!')
     if (!agreed) return showToast('개인정보 수집에 동의해주세요!')
 
     const reservation = addReservation({
@@ -83,10 +83,10 @@ export function ReserveForm() {
 
         <div className="field">
           <span className="field__label">
-            관심 있는 키링 <em className="field__hint">(복수 선택 가능)</em>
+            관심 있는 굿즈 <em className="field__hint">(복수 선택 가능)</em>
           </span>
           <ul className="pick-grid">
-            {PRODUCTS.filter((product) => !product.comingSoon).map((product) => {
+            {PRODUCTS.map((product) => {
               const picked = selected.includes(product.id)
               return (
                 <li key={product.id}>
