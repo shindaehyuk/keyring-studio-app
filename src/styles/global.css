@@ -1388,3 +1388,37 @@ img.reservation-card__media {
   height: auto;
   margin-top: 4px;
 }
+
+/* ---------- 준비 중 상품 · 히어로 사진 ---------- */
+.new-flag--soon {
+  background: var(--color-sub);
+}
+
+.product-card__price--soon,
+.detail-body__price--soon {
+  color: var(--color-sub);
+  font-weight: 600;
+}
+
+.hero__art {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.hero__art-photo {
+  width: 62px;
+  height: 62px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.button-primary:disabled {
+  background: var(--color-line);
+  color: var(--color-sub);
+  cursor: default;
+}
+
+.button-primary:disabled:active {
+  transform: none;
+}

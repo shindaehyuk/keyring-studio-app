@@ -14,7 +14,11 @@ export function ProductCard({ product }: { product: Product }) {
     <Link href={`/product/${product.id}`} className="product-card">
       <div className="product-card__thumb" style={{ background: 'var(--color-bg)' }}>
         <ProductThumb product={product} className="product-card__media" />
-        {product.isNew && <span className="new-flag">NEW</span>}
+        {product.comingSoon ? (
+          <span className="new-flag new-flag--soon">준비 중</span>
+        ) : (
+          product.isNew && <span className="new-flag">NEW</span>
+        )}
         <button
           className="product-card__heart"
           aria-label={liked ? '관심 굿즈에서 삭제' : '관심 굿즈에 추가'}
@@ -28,7 +32,9 @@ export function ProductCard({ product }: { product: Product }) {
         </button>
       </div>
       <p className="product-card__name">{shortNameOf(product)}</p>
-      <p className="product-card__price">{formatPrice(product.price)}</p>
+      <p className={`product-card__price${product.comingSoon ? ' product-card__price--soon' : ''}`}>
+        {product.comingSoon ? '가격 준비 중' : formatPrice(product.price)}
+      </p>
     </Link>
   )
 }

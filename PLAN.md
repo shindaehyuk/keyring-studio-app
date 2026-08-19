@@ -28,7 +28,7 @@
 ```
 Keyring Studio
 ├── 홈 (랜딩, /)
-│   ├── 히어로 배너 캐러셀 (COMING SOON / 시즌 한정 / 증정 / 커스텀)
+│   ├── 히어로 배너 캐러셀 (COMING SOON / 2종 세트 / 증정 / 티셔츠 예고)
 │   ├── 오픈 카운트다운 (D-day 타이머)
 │   ├── 미리 만나는 키링 친구들 (대표 굿즈 그리드)
 │   ├── 사전예약 혜택 3종
@@ -58,7 +58,8 @@ Keyring Studio
 - 대표 굿즈 3열 그리드(NEW 뱃지·하트), 혜택 카드 3종, 마무리 CTA, 푸터
 
 ### 4.2 컬렉션 (`/collection`)
-- 필터 칩(전체/캐릭터/심플/이니셜/파스텔/시즌 한정) + 2열 굿즈 그리드
+- 필터 칩(전체/키링/티셔츠) + 2열 굿즈 그리드
+- 티셔츠는 디자인·가격 확정 전이라 `준비 중` 플레이스홀더로 자리만 노출
 - `?c=카테고리` 쿼리로 진입 시 해당 필터 프리셋
 
 ### 4.3 굿즈 상세 (`/product/:id`)
@@ -98,7 +99,7 @@ Keyring Studio
 ### 5.3 컴포넌트 규칙
 - 라운드: 카드 20px, 버튼 14px, 칩·필 999px
 - Primary 버튼 = 블랙 필 + 흰 텍스트, 높이 54px
-- 굿즈 일러스트: 이미지 에셋 없이 **인라인 SVG** 8종(구름·토끼·별·하트·데이지·리본·체리·이니셜)
+- 굿즈 대표 이미지는 실물 촬영 사진, 준비 중 상품은 인라인 SVG 플레이스홀더
 - 그림자 최소화, 보더·파스텔 배경으로 위계 표현
 
 ## 6. 기술 스택
@@ -116,7 +117,7 @@ Keyring Studio
 ## 7. 데이터 모델
 
 ```ts
-type CategoryId = 'character' | 'simple' | 'initial' | 'pastel' | 'season'
+type CategoryId = 'keyring' | 'tshirt'
 
 interface Product {
   id: string
@@ -126,10 +127,11 @@ interface Product {
   description: string[]
   category: CategoryId
   bg: string            // 파스텔 배경 토큰
-  art: ArtId            // SVG 일러스트 식별자 (photo 없을 때)
+  art?: ArtId           // SVG 일러스트 식별자 (photo 없을 때)
   photo?: string        // 실물 촬영 사진 (카드 썸네일·상세 상단)
   detailImage?: string  // 세로로 긴 상세 설명 이미지
   specs?: Spec[]        // 굿즈 정보 표 (없으면 기본값)
+  comingSoon?: boolean  // 준비 중 — 가격·예약 대신 '준비 중' 표시
   isNew?: boolean
   popular?: boolean     // 랜딩 노출 여부
 }

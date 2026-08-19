@@ -2,42 +2,42 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { KeyringArt, type ArtId } from '../art/KeyringArt'
+import { assetPath } from '../lib/assetPath'
 
 const HERO_SLIDES: {
   label: string
   title: string
   desc: string
   bg: string
-  arts: readonly ArtId[]
+  photos: readonly string[]
 }[] = [
   {
     label: 'COMING SOON',
-    title: '키링 친구들\n곧 만나요!',
-    desc: '귀여운 아크릴 키링 컬렉션,\n지금 사전예약하고 먼저 만나보세요.',
+    title: '사자 키링\n곧 만나요!',
+    desc: '귀여운 사자 아크릴 키링,\n지금 사전예약하고 먼저 만나보세요.',
     bg: 'var(--color-lavender)',
-    arts: ['heart', 'cloud', 'star'],
+    photos: ['/sponge-lion.webp', '/coffee-lion.webp'],
   },
   {
-    label: 'SEASON LIMITED',
-    title: '여름 한정\n체리 키링',
-    desc: '이번 시즌에만 만날 수 있는\n상큼한 디자인이에요.',
+    label: '2-PIECE SET',
+    title: '사자와 친구\n2종 세트',
+    desc: '하나의 D링에 두 가지 참!\n사자와 소품이 한 세트예요.',
     bg: 'var(--color-pink)',
-    arts: ['cherry', 'ribbon'],
+    photos: ['/spatula-lion.webp', '/snack-lion.webp'],
   },
   {
     label: 'PRE-ORDER GIFT',
     title: '예약하면\n스티커 증정',
     desc: '사전예약자 전원에게\n한정 스티커 세트를 드려요.',
     bg: 'var(--color-cream)',
-    arts: ['rabbit', 'star'],
+    photos: ['/bible-lion.webp', '/sponge-lion.webp'],
   },
   {
-    label: 'CUSTOM',
-    title: '이니셜 키링\n주문 제작',
-    desc: '나만의 알파벳으로\n특별한 키링을 만들어보세요.',
+    label: 'NEXT UP',
+    title: '사자 티셔츠\n준비 중',
+    desc: '키링에 이어 티셔츠도\n곧 선보일 예정이에요.',
     bg: 'var(--color-mint)',
-    arts: ['initial', 'flower'],
+    photos: ['/snack-lion.webp', '/coffee-lion.webp'],
   },
 ]
 
@@ -64,9 +64,16 @@ export function HeroBanner() {
             사전예약하기
           </Link>
         </div>
-        <div className="hero__art" style={{ display: 'flex', gap: 4 }}>
-          {hero.arts.map((art, i) => (
-            <KeyringArt key={art} art={art} style={{ width: 62, marginTop: i % 2 === 1 ? 18 : 0 }} />
+        <div className="hero__art">
+          {hero.photos.map((photo, i) => (
+            <img
+              key={photo + i}
+              className="hero__art-photo"
+              src={assetPath(photo)}
+              alt=""
+              aria-hidden
+              style={{ marginTop: i % 2 === 1 ? 22 : 0 }}
+            />
           ))}
         </div>
         <div className="hero__dots">
