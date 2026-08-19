@@ -1,31 +1,30 @@
-import { useSearchParams } from 'react-router-dom'
-import { BottomNav } from '../components/BottomNav'
-import { ProductCard } from '../components/ProductCard'
-import { CATEGORIES, PRODUCTS, type CategoryId } from '../data/products'
+'use client'
 
-export function Category() {
-  const [params, setParams] = useSearchParams()
-  const active = (params.get('c') ?? 'all') as CategoryId | 'all'
+import { useState } from 'react'
+import { ProductCard } from '../../components/ProductCard'
+import { CATEGORIES, PRODUCTS, type CategoryId } from '../../data/products'
+
+export function CollectionList({ initialCategory }: { initialCategory: CategoryId | 'all' }) {
+  const [active, setActive] = useState<CategoryId | 'all'>(
+    CATEGORIES.some((c) => c.id === initialCategory) ? initialCategory : 'all',
+  )
   const products = active === 'all' ? PRODUCTS : PRODUCTS.filter((p) => p.category === active)
 
   return (
     <div className="page">
       <header className="page-header">
-        <h1 className="page-header__title">카테고리</h1>
+        <h1 className="page-header__title">컬렉션</h1>
       </header>
 
       <div className="filter-chips">
-        <button
-          className={`chip${active === 'all' ? ' active' : ''}`}
-          onClick={() => setParams({})}
-        >
+        <button className={`chip${active === 'all' ? ' active' : ''}`} onClick={() => setActive('all')}>
           전체
         </button>
         {CATEGORIES.map((category) => (
           <button
             key={category.id}
             className={`chip${active === category.id ? ' active' : ''}`}
-            onClick={() => setParams({ c: category.id })}
+            onClick={() => setActive(category.id)}
           >
             {category.label}
           </button>
@@ -39,7 +38,6 @@ export function Category() {
       </div>
 
       <div style={{ height: 28 }} />
-      <BottomNav />
     </div>
   )
 }

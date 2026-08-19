@@ -1,3 +1,5 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+
 :root {
   --color-ink: #191919;
   --color-sub: #8a8a8e;
@@ -554,12 +556,12 @@ svg {
 
 .detail-cta {
   position: fixed;
-  bottom: 0;
+  bottom: calc(var(--nav-height) + env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
   max-width: 430px;
-  padding: 12px 20px calc(16px + env(safe-area-inset-bottom));
+  padding: 12px 20px 14px;
   background: linear-gradient(to top, #fff 78%, rgba(255, 255, 255, 0));
   display: flex;
   gap: 10px;
@@ -853,4 +855,418 @@ svg {
   font-weight: 700;
   display: grid;
   place-items: center;
+}
+
+/* ---------- 헤더 사전예약 버튼 ---------- */
+.header-pill {
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--color-ink);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+.new-flag {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: var(--color-accent);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+/* ---------- 카운트다운 ---------- */
+.countdown-section {
+  margin: 0 20px 32px;
+  padding: 22px 20px 20px;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-line);
+  text-align: center;
+}
+
+.countdown-section__caption {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-accent);
+  letter-spacing: 0.04em;
+}
+
+.countdown {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.countdown__unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 52px;
+}
+
+.countdown__value {
+  font-size: 26px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.countdown__label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-faint);
+  letter-spacing: 0.1em;
+}
+
+.countdown__colon {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-faint);
+  margin-top: 2px;
+}
+
+.countdown__open {
+  margin-top: 12px;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.countdown-section__note {
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--color-sub);
+}
+
+/* ---------- 혜택 카드 ---------- */
+.benefit-section {
+  margin-top: 34px;
+}
+
+.benefit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 20px;
+}
+
+.benefit-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--color-surface);
+}
+
+.benefit-card__emoji {
+  font-size: 26px;
+  flex-shrink: 0;
+}
+
+.benefit-card__title {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.benefit-card__desc {
+  margin-top: 3px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-sub);
+}
+
+/* ---------- 하단 CTA & 푸터 ---------- */
+.cta-section {
+  margin: 36px 20px 0;
+  padding: 28px 22px;
+  border-radius: var(--radius-card);
+  background: var(--color-lavender);
+  text-align: center;
+}
+
+.cta-section__title {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.45;
+  margin-bottom: 18px;
+}
+
+.site-footer {
+  margin-top: 36px;
+  padding: 28px 20px 36px;
+  border-top: 1px solid var(--color-line);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--color-sub);
+}
+
+.site-footer__logo {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--color-ink);
+  margin-bottom: 8px;
+}
+
+.site-footer__fine {
+  margin-top: 10px;
+  color: var(--color-faint);
+}
+
+/* ---------- 상세 보조 ---------- */
+.detail-body__price-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-accent);
+  margin-right: 8px;
+  vertical-align: 2px;
+}
+
+.detail-note {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--color-surface);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--color-sub);
+}
+
+/* ---------- 사전예약 폼 ---------- */
+.reserve-form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 8px 20px 32px;
+}
+
+.reserve-form__intro {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--color-sub);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field__label {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.field__hint {
+  font-style: normal;
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--color-faint);
+}
+
+.field__input {
+  height: 50px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid var(--color-line);
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--color-ink);
+  background: var(--color-bg);
+  outline: none;
+}
+
+.field__input:focus {
+  border-color: var(--color-ink);
+}
+
+.field__input::placeholder {
+  color: var(--color-faint);
+}
+
+.pick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.pick-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 4px 10px;
+  border-radius: 14px;
+  border: 1.5px solid var(--color-line);
+  background: var(--color-bg);
+}
+
+.pick-card.picked {
+  border-color: var(--color-accent);
+  background: var(--color-lavender);
+}
+
+.pick-card__thumb {
+  width: 44px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+}
+
+.pick-card__name {
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.pick-card__price {
+  font-size: 10.5px;
+  color: var(--color-sub);
+}
+
+.agree-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--color-sub);
+}
+
+.agree-row input {
+  margin-top: 3px;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-ink);
+  flex-shrink: 0;
+}
+
+/* ---------- 예약 완료 ---------- */
+.done {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 24px 32px;
+  text-align: center;
+}
+
+.done__art {
+  width: 130px;
+  height: 160px;
+}
+
+.done__title {
+  margin-top: 20px;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.done__desc {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--color-sub);
+}
+
+.done__card {
+  width: 100%;
+  margin-top: 24px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--color-surface);
+  font-size: 13px;
+}
+
+.done__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.done__row + .done__row {
+  margin-top: 10px;
+}
+
+.done__row span {
+  color: var(--color-sub);
+  flex-shrink: 0;
+}
+
+.done__benefits {
+  width: 100%;
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.done__benefits li {
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--color-line);
+}
+
+/* ---------- 내 예약 ---------- */
+.reservation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 20px 28px;
+}
+
+.reservation-card {
+  border: 1px solid var(--color-line);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.reservation-card__head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.reservation-card__head span {
+  color: var(--color-sub);
+}
+
+.reservation-card__thumbs {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.reservation-card__thumb {
+  width: 52px;
+  height: 62px;
+  border-radius: 10px;
+  background: var(--color-surface);
+  display: grid;
+  place-items: center;
+  padding: 6px;
+}
+
+.reservation-card__names {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.reservation-card__cancel {
+  margin-top: 12px;
+  font-size: 12.5px;
+  color: var(--color-faint);
+  text-decoration: underline;
 }

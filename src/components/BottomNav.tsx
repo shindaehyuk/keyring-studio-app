@@ -1,27 +1,30 @@
-import { NavLink } from 'react-router-dom'
+'use client'
+
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { GridIcon, HeartIcon, HomeIcon, PersonIcon } from '../art/Icons'
 
 const TABS = [
-  { to: '/', label: '홈', icon: HomeIcon },
-  { to: '/category', label: '카테고리', icon: GridIcon },
-  { to: '/wishlist', label: '위시리스트', icon: HeartIcon },
-  { to: '/my', label: '마이페이지', icon: PersonIcon },
+  { href: '/', label: '홈', icon: HomeIcon },
+  { href: '/collection', label: '컬렉션', icon: GridIcon },
+  { href: '/wishlist', label: '관심 굿즈', icon: HeartIcon },
+  { href: '/my', label: '내 예약', icon: PersonIcon },
 ]
 
 export function BottomNav() {
+  const pathname = usePathname()
+
   return (
     <nav className="bottom-nav">
-      {TABS.map(({ to, label, icon: Icon }) => (
-        <NavLink
-          key={to}
-          to={to}
-          end={to === '/'}
-          className={({ isActive }) => `bottom-nav__item${isActive ? ' active' : ''}`}
-        >
-          <Icon size={23} />
-          {label}
-        </NavLink>
-      ))}
+      {TABS.map(({ href, label, icon: Icon }) => {
+        const active = href === '/' ? pathname === '/' : pathname.startsWith(href)
+        return (
+          <Link key={href} href={href} className={`bottom-nav__item${active ? ' active' : ''}`}>
+            <Icon size={23} />
+            {label}
+          </Link>
+        )
+      })}
     </nav>
   )
 }

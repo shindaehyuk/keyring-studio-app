@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react'
+import type { CSSProperties, ReactElement } from 'react'
 
 export type ArtId =
   | 'cloud'
@@ -189,7 +189,7 @@ function InitialCharm() {
   )
 }
 
-const CHARMS: Record<ArtId, () => JSX.Element> = {
+const CHARMS: Record<ArtId, () => ReactElement> = {
   cloud: CloudCharm,
   rabbit: RabbitCharm,
   star: StarCharm,

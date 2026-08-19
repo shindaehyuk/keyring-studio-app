@@ -1,3 +1,5 @@
+'use client'
+
 import {
   createContext,
   useCallback,
@@ -9,45 +11,52 @@ import {
   type ReactNode,
 } from 'react'
 
-export interface CartItem {
-  productId: string
-  option: string
-  qty: number
+export interface Reservation {
+  id: string
+  name: string
+  contact: string
+  productIds: string[]
+  createdAt: string
 }
 
 interface AppStore {
   wishlist: string[]
   toggleWishlist: (productId: string) => void
-  cart: CartItem[]
-  addToCart: (item: CartItem) => void
-  updateQty: (productId: string, option: string, qty: number) => void
-  removeFromCart: (productId: string, option: string) => void
-  clearCart: () => void
+  reservations: Reservation[]
+  addReservation: (input: Omit<Reservation, 'id' | 'createdAt'>) => Reservation
+  cancelReservation: (id: string) => void
   showToast: (message: string) => void
 }
 
 const StoreContext = createContext<AppStore | null>(null)
 
+/** SSR 첫 렌더와 클라이언트 하이드레이션이 어긋나지 않도록 마운트 후 localStorage를 읽는다 */
 function usePersistedState<T>(key: string, initial: T) {
-  const [value, setValue] = useState<T>(() => {
+  const [value, setValue] = useState<T>(initial)
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
     try {
       const raw = localStorage.getItem(key)
-      return raw ? (JSON.parse(raw) as T) : initial
+      if (raw) setValue(JSON.parse(raw) as T)
     } catch {
-      return initial
+      /* 손상된 값은 무시 */
     }
-  })
+    setLoaded(true)
+  }, [key])
+
   useEffect(() => {
-    localStorage.setItem(key, JSON.stringify(value))
-  }, [key, value])
+    if (loaded) localStorage.setItem(key, JSON.stringify(value))
+  }, [key, value, loaded])
+
   return [value, setValue] as const
 }
 
 export function AppStoreProvider({ children }: { children: ReactNode }) {
   const [wishlist, setWishlist] = usePersistedState<string[]>('ks:wishlist', [])
-  const [cart, setCart] = usePersistedState<CartItem[]>('ks:cart', [])
+  const [reservations, setReservations] = usePersistedState<Reservation[]>('ks:reservations', [])
   const [toast, setToast] = useState<string | null>(null)
-  const toastTimer = useRef<number>()
+  const toastTimer = useRef<number | undefined>(undefined)
 
   const toggleWishlist = useCallback(
     (productId: string) => {
@@ -58,42 +67,25 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     [setWishlist],
   )
 
-  const addToCart = useCallback(
-    (item: CartItem) => {
-      setCart((prev) => {
-        const existing = prev.find(
-          (c) => c.productId === item.productId && c.option === item.option,
-        )
-        if (existing) {
-          return prev.map((c) =>
-            c === existing ? { ...c, qty: c.qty + item.qty } : c,
-          )
-        }
-        return [...prev, item]
-      })
+  const addReservation = useCallback(
+    (input: Omit<Reservation, 'id' | 'createdAt'>) => {
+      const reservation: Reservation = {
+        ...input,
+        id: `KS-${Date.now().toString(36).toUpperCase()}`,
+        createdAt: new Date().toISOString(),
+      }
+      setReservations((prev) => [reservation, ...prev])
+      return reservation
     },
-    [setCart],
+    [setReservations],
   )
 
-  const updateQty = useCallback(
-    (productId: string, option: string, qty: number) => {
-      setCart((prev) =>
-        prev.map((c) =>
-          c.productId === productId && c.option === option ? { ...c, qty: Math.max(1, qty) } : c,
-        ),
-      )
+  const cancelReservation = useCallback(
+    (id: string) => {
+      setReservations((prev) => prev.filter((r) => r.id !== id))
     },
-    [setCart],
+    [setReservations],
   )
-
-  const removeFromCart = useCallback(
-    (productId: string, option: string) => {
-      setCart((prev) => prev.filter((c) => !(c.productId === productId && c.option === option)))
-    },
-    [setCart],
-  )
-
-  const clearCart = useCallback(() => setCart([]), [setCart])
 
   const showToast = useCallback((message: string) => {
     setToast(message)
@@ -102,17 +94,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(
-    () => ({
-      wishlist,
-      toggleWishlist,
-      cart,
-      addToCart,
-      updateQty,
-      removeFromCart,
-      clearCart,
-      showToast,
-    }),
-    [wishlist, toggleWishlist, cart, addToCart, updateQty, removeFromCart, clearCart, showToast],
+    () => ({ wishlist, toggleWishlist, reservations, addReservation, cancelReservation, showToast }),
+    [wishlist, toggleWishlist, reservations, addReservation, cancelReservation, showToast],
   )
 
   return (
