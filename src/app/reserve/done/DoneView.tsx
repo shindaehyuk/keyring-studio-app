@@ -3,7 +3,8 @@
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { KeyringArt } from '../../../art/KeyringArt'
-import { BENEFITS } from '../../../data/site'
+import { PURPOSE } from '../../../data/site'
+import { PurposeIcon } from '../../../components/PurposeIcon'
 import { getProduct, shortNameOf } from '../../../data/products'
 import { useAppStore } from '../../../store/AppStore'
 
@@ -43,10 +44,14 @@ export function DoneView() {
           </div>
         )}
 
+        <p className="done__purpose-label">이 굿즈를 만든 이유</p>
         <ul className="done__benefits">
-          {BENEFITS.map((benefit) => (
-            <li key={benefit.title}>
-              <span aria-hidden>{benefit.emoji}</span> {benefit.title}
+          {PURPOSE.map((item) => (
+            <li key={item.title}>
+              <span className="done__purpose-icon" aria-hidden>
+                <PurposeIcon icon={item.icon} size={18} />
+              </span>
+              {item.title}
             </li>
           ))}
         </ul>

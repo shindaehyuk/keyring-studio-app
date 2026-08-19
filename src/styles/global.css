@@ -956,8 +956,14 @@ svg {
   background: var(--color-surface);
 }
 
-.benefit-card__emoji {
-  font-size: 26px;
+.benefit-card__icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--color-bg);
+  color: var(--color-accent);
   flex-shrink: 0;
 }
 
@@ -1202,9 +1208,28 @@ svg {
 }
 
 .done__benefits li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 12px 16px;
   border-radius: 12px;
   border: 1px solid var(--color-line);
+}
+
+.done__purpose-icon {
+  display: grid;
+  place-items: center;
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.done__purpose-label {
+  width: 100%;
+  margin-top: 22px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-sub);
+  text-align: left;
 }
 
 /* ---------- 내 예약 ---------- */

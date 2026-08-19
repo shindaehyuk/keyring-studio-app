@@ -4,7 +4,8 @@ import { HeroBanner } from '../components/HeroBanner'
 import { NoticeBanner } from '../components/NoticeBanner'
 import { ProductCard } from '../components/ProductCard'
 import { SplashIntro } from '../components/SplashIntro'
-import { BENEFITS } from '../data/site'
+import { PURPOSE } from '../data/site'
+import { PurposeIcon } from '../components/PurposeIcon'
 import { assetPath } from '../lib/assetPath'
 import { PRODUCTS } from '../data/products'
 
@@ -48,17 +49,17 @@ export default function LandingPage() {
 
       <section className="benefit-section">
         <div className="section-heading">
-          <h2>사전예약 혜택</h2>
+          <h2>이 굿즈를 만든 이유</h2>
         </div>
         <ul className="benefit-list">
-          {BENEFITS.map((benefit) => (
-            <li key={benefit.title} className="benefit-card">
-              <span className="benefit-card__emoji" aria-hidden>
-                {benefit.emoji}
+          {PURPOSE.map((item) => (
+            <li key={item.title} className="benefit-card">
+              <span className="benefit-card__icon" aria-hidden>
+                <PurposeIcon icon={item.icon} size={22} />
               </span>
               <div>
-                <p className="benefit-card__title">{benefit.title}</p>
-                <p className="benefit-card__desc">{benefit.desc}</p>
+                <p className="benefit-card__title">{item.title}</p>
+                <p className="benefit-card__desc">{item.desc}</p>
               </div>
             </li>
           ))}

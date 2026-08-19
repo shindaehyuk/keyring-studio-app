@@ -1,20 +1,29 @@
 /** 정식 오픈(사전예약 마감) 시각 */
 export const LAUNCH_DATE = '2026-08-23T09:30:00+09:00'
 
-export const BENEFITS = [
+/** 굿즈를 만든 이유 — 랜딩과 예약 완료 화면에서 함께 쓴다 */
+export type PurposeIconId = 'pencil' | 'offering' | 'people'
+
+export interface PurposeItem {
+  icon: PurposeIconId
+  title: string
+  desc: string
+}
+
+export const PURPOSE: PurposeItem[] = [
   {
-    emoji: '🎀',
-    title: '얼리버드 10% 할인',
-    desc: '사전예약 시 전 상품 오픈가에서 10% 할인 쿠폰을 드려요.',
+    icon: 'pencil',
+    title: '직접 그리고 만들었어요',
+    desc: '캐릭터 디자인부터 제작까지, 수원교회 청년들이 함께 만든 굿즈예요.',
   },
   {
-    emoji: '✨',
-    title: '한정 스티커 증정',
-    desc: '예약자 전원에게 키링 친구들 스티커 세트를 함께 보내드려요.',
+    icon: 'offering',
+    title: '수익금은 헌금에 씁니다',
+    desc: '판매 수익은 전액 청년집회 및 초대의 날에 사용됩니다.',
   },
   {
-    emoji: '🚚',
-    title: '우선 발송',
-    desc: '오픈 당일, 사전예약 순서대로 가장 먼저 발송해드려요.',
+    icon: 'people',
+    title: '함께 나누는 즐거움',
+    desc: '가방에, 열쇠에 하나씩 달고 다니며 서로를 떠올려요.',
   },
-] as const
+]
