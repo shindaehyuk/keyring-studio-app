@@ -3,9 +3,9 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, type FormEvent } from 'react'
 import { BackIcon } from '../../art/Icons'
-import { KeyringArt } from '../../art/KeyringArt'
-import { formatPrice, getProduct, PRODUCTS } from '../../data/products'
+import { formatPrice, getProduct, PRODUCTS, shortNameOf } from '../../data/products'
 import { useAppStore } from '../../store/AppStore'
+import { ProductThumb } from '../../components/ProductThumb'
 
 export function ReserveForm() {
   const preselectedId = useSearchParams().get('p') ?? undefined
@@ -97,9 +97,9 @@ export function ReserveForm() {
                     aria-pressed={picked}
                   >
                     <span className="pick-card__thumb">
-                      <KeyringArt art={product.art} />
+                      <ProductThumb product={product} className="pick-card__media" />
                     </span>
-                    <span className="pick-card__name">{product.name.replace(' 키링', '')}</span>
+                    <span className="pick-card__name">{shortNameOf(product)}</span>
                     <span className="pick-card__price">{formatPrice(product.price)}</span>
                   </button>
                 </li>

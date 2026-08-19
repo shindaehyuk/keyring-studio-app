@@ -121,14 +121,25 @@ type CategoryId = 'character' | 'simple' | 'initial' | 'pastel' | 'season'
 interface Product {
   id: string
   name: string          // 예: '구름 친구 키링'
+  shortName?: string    // 카드·픽커용 짧은 이름
   price: number         // 사전예약가 (원)
   description: string[]
   category: CategoryId
   bg: string            // 파스텔 배경 토큰
-  art: ArtId            // SVG 일러스트 식별자
+  art: ArtId            // SVG 일러스트 식별자 (photo 없을 때)
+  photo?: string        // 실물 촬영 사진 (카드 썸네일·상세 상단)
+  detailImage?: string  // 세로로 긴 상세 설명 이미지
+  specs?: Spec[]        // 굿즈 정보 표 (없으면 기본값)
   isNew?: boolean
   popular?: boolean     // 랜딩 노출 여부
 }
+```
+
+> 굿즈는 두 가지 형태를 함께 지원한다. **SVG 일러스트 상품**(`art`)은 에셋 없이 벡터로 그리고,
+> **실물 사진 상품**(`photo` + `detailImage`)은 촬영 사진을 썸네일·상세 상단에 쓰고
+> 상세 페이지 하단에 긴 상세 설명 이미지를 이어 붙인다.
+
+```ts
 
 interface Reservation {
   id: string            // 'KS-XXXXXX' 예약 번호

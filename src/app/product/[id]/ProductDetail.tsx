@@ -4,7 +4,8 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { BackIcon, HeartIcon, ShareIcon } from '../../../art/Icons'
 import { KeyringArt, Sparkle } from '../../../art/KeyringArt'
-import { formatPrice, KEYRING_TYPES, type Product } from '../../../data/products'
+import { DEFAULT_SPECS, formatPrice, type Product } from '../../../data/products'
+import { assetPath } from '../../../lib/assetPath'
 import { useAppStore } from '../../../store/AppStore'
 
 const SLIDE_COUNT = 4
@@ -49,30 +50,36 @@ export function ProductDetail({ product }: { product: Product }) {
         </div>
       </div>
 
-      <div
-        className="detail-hero"
-        style={{ background: product.bg }}
-        onClick={() => setSlide((s) => (s + 1) % SLIDE_COUNT)}
-      >
-        <svg
-          viewBox="0 0 120 170"
-          aria-hidden="true"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.55 }}
-        >
-          <Sparkle x={14} y={40} size={5} color="#ffffff" />
-          <Sparkle x={106} y={30} size={4} color="#ffffff" />
-          <Sparkle x={10} y={140} size={4} color="#ffffff" />
-          <Sparkle x={110} y={130} size={5} color="#ffffff" />
-        </svg>
-        <KeyringArt art={product.art} className="detail-art" />
-        <div className="detail-hero__dots">
-          {Array.from({ length: SLIDE_COUNT }).map((_, i) => (
-            <span key={i} className={`dot${i === slide ? ' active' : ''}`} />
-          ))}
+      {product.photo ? (
+        <div className="detail-hero detail-hero--photo">
+          <img className="detail-hero__photo" src={assetPath(product.photo)} alt={product.name} />
         </div>
-      </div>
+      ) : (
+        <div
+          className="detail-hero"
+          style={{ background: product.bg }}
+          onClick={() => setSlide((s) => (s + 1) % SLIDE_COUNT)}
+        >
+          <svg
+            viewBox="0 0 120 170"
+            aria-hidden="true"
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.55 }}
+          >
+            <Sparkle x={14} y={40} size={5} color="#ffffff" />
+            <Sparkle x={106} y={30} size={4} color="#ffffff" />
+            <Sparkle x={10} y={140} size={4} color="#ffffff" />
+            <Sparkle x={110} y={130} size={5} color="#ffffff" />
+          </svg>
+          <KeyringArt art={product.art} className="detail-art" />
+          <div className="detail-hero__dots">
+            {Array.from({ length: SLIDE_COUNT }).map((_, i) => (
+              <span key={i} className={`dot${i === slide ? ' active' : ''}`} />
+            ))}
+          </div>
+        </div>
+      )}
 
-      <div className="detail-body">
+      <div className={`detail-body${product.detailImage ? ' detail-body--with-figure' : ''}`}>
         <h1 className="detail-body__name">{product.name}</h1>
         <p className="detail-body__price">
           <span className="detail-body__price-label">사전예약가</span>
@@ -89,24 +96,31 @@ export function ProductDetail({ product }: { product: Product }) {
 
         <p className="option-title">굿즈 정보</p>
         <div className="option-card">
-          <div className="option-row">
-            <span className="option-row__label">사이즈</span>
-            <span className="option-row__value">약 5cm (키링 제외)</span>
-          </div>
-          <div className="option-row">
-            <span className="option-row__label">재질</span>
-            <span className="option-row__value">아크릴 3T + 홀로그램 코팅</span>
-          </div>
-          <div className="option-row">
-            <span className="option-row__label">키링 타입</span>
-            <span className="option-row__value">{KEYRING_TYPES.join(' · ')}</span>
-          </div>
+          {(product.specs ?? DEFAULT_SPECS).map((spec) => (
+            <div key={spec.label} className="option-row">
+              <span className="option-row__label">{spec.label}</span>
+              <span className="option-row__value">{spec.value}</span>
+            </div>
+          ))}
         </div>
 
         <p className="detail-note">
           정식 오픈 전 사전예약 상품이에요. 예약하시면 오픈 소식과 혜택을 가장 먼저 알려드려요!
         </p>
       </div>
+
+      {product.detailImage && (
+        <section className="detail-figure">
+          <p className="option-title" style={{ padding: '0 20px', marginTop: 0 }}>
+            상세 정보
+          </p>
+          <img
+            className="detail-figure__image"
+            src={assetPath(product.detailImage)}
+            alt={`${product.name} 상세 정보`}
+          />
+        </section>
+      )}
 
       <div className="detail-cta">
         <button

@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 import { KeyringArt } from '../../art/KeyringArt'
-import { getProduct } from '../../data/products'
+import { getProduct, shortNameOf } from '../../data/products'
 import { useAppStore } from '../../store/AppStore'
+import { ProductThumb } from '../../components/ProductThumb'
 
 export default function MyReservationsPage() {
   const { reservations, cancelReservation, showToast } = useAppStore()
@@ -40,14 +41,14 @@ export default function MyReservationsPage() {
                   if (!product) return null
                   return (
                     <span key={id} className="reservation-card__thumb" title={product.name}>
-                      <KeyringArt art={product.art} />
+                      <ProductThumb product={product} className="reservation-card__media" />
                     </span>
                   )
                 })}
               </div>
               <p className="reservation-card__names">
                 {reservation.productIds
-                  .map((id) => getProduct(id)?.name.replace(' 키링', ''))
+                  .map((id) => { const p = getProduct(id); return p && shortNameOf(p) })
                   .filter(Boolean)
                   .join(', ')}
               </p>
