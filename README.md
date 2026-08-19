@@ -30,6 +30,15 @@ npm run build    # 프로덕션 빌드
 npm start
 ```
 
+## 배포 (GitHub Pages)
+
+`master` 브랜치에 push하면 GitHub Actions가 정적 빌드 후 GitHub Pages로 자동 배포합니다.
+
+- 배포 주소: `https://<계정>.github.io/keyring-studio-app/`
+- 워크플로: [.github/workflows/deploy.yml](./.github/workflows/deploy.yml) — Next.js `output: 'export'`로 `out/`을 생성해 업로드
+- 첫 배포 전 저장소 **Settings → Pages → Source**가 `GitHub Actions`인지 확인하세요 (워크플로가 자동 활성화를 시도하지만, 실패 시 수동으로 한 번 설정 필요)
+- Actions 탭에서 `Deploy to GitHub Pages` 워크플로를 수동 실행(workflow_dispatch)할 수도 있습니다
+
 ## 문서
 
 - [PLAN.md](./PLAN.md) — 서비스 기획서 (IA, 화면 정의, 디자인 시스템, 로드맵)

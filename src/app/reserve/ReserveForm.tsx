@@ -1,13 +1,14 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, type FormEvent } from 'react'
 import { BackIcon } from '../../art/Icons'
 import { KeyringArt } from '../../art/KeyringArt'
 import { formatPrice, getProduct, PRODUCTS } from '../../data/products'
 import { useAppStore } from '../../store/AppStore'
 
-export function ReserveForm({ preselectedId }: { preselectedId?: string }) {
+export function ReserveForm() {
+  const preselectedId = useSearchParams().get('p') ?? undefined
   const router = useRouter()
   const { addReservation, showToast } = useAppStore()
   const [name, setName] = useState('')

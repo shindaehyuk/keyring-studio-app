@@ -6,3 +6,4 @@ dist-ssr
 npm-debug.log*
 *.tsbuildinfo
 .next
+out

@@ -1,12 +1,14 @@
 'use client'
 
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { KeyringArt } from '../../../art/KeyringArt'
 import { BENEFITS } from '../../../data/site'
 import { getProduct } from '../../../data/products'
 import { useAppStore } from '../../../store/AppStore'
 
-export function DoneView({ reservationId }: { reservationId?: string }) {
+export function DoneView() {
+  const reservationId = useSearchParams().get('id') ?? undefined
   const { reservations } = useAppStore()
   const reservation = reservationId
     ? reservations.find((r) => r.id === reservationId)
