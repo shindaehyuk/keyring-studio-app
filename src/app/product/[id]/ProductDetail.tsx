@@ -96,7 +96,7 @@ export function ProductDetail({ product }: { product: Product }) {
         </div>
 
         <p className="detail-note">
-          정식 오픈 전 사전예약 상품이에요. 예약하시면 오픈 소식과 혜택을 가장 먼저 알려드려요!
+          정식 오픈 전 사전예약 상품이에요. 예약하시면 오픈 소식을 가장 먼저 알려드려요!
         </p>
       </div>
 

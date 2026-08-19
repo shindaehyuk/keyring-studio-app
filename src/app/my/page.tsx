@@ -21,7 +21,7 @@ export default function MyReservationsPage() {
           <p>
             아직 사전예약 내역이 없어요.
             <br />
-            지금 예약하고 얼리버드 혜택을 받아보세요!
+            지금 예약하고 오픈 소식을 가장 먼저 받아보세요!
           </p>
           <Link href="/reserve" className="hero__cta" style={{ marginTop: 4 }}>
             사전예약하러 가기

@@ -129,3 +129,45 @@ export const TagIcon = ({ size = 24, color = 'currentColor' }: IconProps) => (
     <circle cx="15.8" cy="8.2" r="1.3" stroke={color} strokeWidth="1.4" />
   </svg>
 )
+
+/* ---- 굿즈를 만든 이유 섹션용 ---- */
+
+export const PencilIcon = ({ size = 24, color = 'currentColor' }: IconProps) => (
+  <svg {...base(size)}>
+    <path
+      d="M4 20 L4.9 16.2 L15.8 5.3 A2.1 2.1 0 0 1 18.8 5.3 L18.7 5.2 A2.1 2.1 0 0 1 18.7 8.2 L7.8 19.1 Z"
+      stroke={color}
+      strokeWidth="1.7"
+      strokeLinejoin="round"
+    />
+    <path d="M14.4 6.7 L17.3 9.6" stroke={color} strokeWidth="1.7" strokeLinecap="round" />
+  </svg>
+)
+
+export const OfferingIcon = ({ size = 24, color = 'currentColor' }: IconProps) => (
+  <svg {...base(size)}>
+    {/* 두 손 위에 놓인 하트 — 작은 크기에서도 읽히도록 단순하게 */}
+    <path
+      d="M12 5.4 C10.7 3.2 7.3 3.7 7.3 6.4 C7.3 8.5 9.7 10.3 12 12.2 C14.3 10.3 16.7 8.5 16.7 6.4 C16.7 3.7 13.3 3.2 12 5.4 Z"
+      stroke={color}
+      strokeWidth="1.7"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M4.4 14.2 C4.4 18.4 7.8 21 12 21 C16.2 21 19.6 18.4 19.6 14.2"
+      stroke={color}
+      strokeWidth="1.7"
+      strokeLinecap="round"
+    />
+    <path d="M4.4 14.2 L6.6 16.2 M19.6 14.2 L17.4 16.2" stroke={color} strokeWidth="1.7" strokeLinecap="round" />
+  </svg>
+)
+
+export const PeopleIcon = ({ size = 24, color = 'currentColor' }: IconProps) => (
+  <svg {...base(size)}>
+    <circle cx="9" cy="8.4" r="3.4" stroke={color} strokeWidth="1.7" />
+    <path d="M2.8 20 C3.6 16.6 6 15 9 15 C12 15 14.4 16.6 15.2 20" stroke={color} strokeWidth="1.7" strokeLinecap="round" />
+    <path d="M16 5.4 A3.4 3.4 0 0 1 16 11.8" stroke={color} strokeWidth="1.7" strokeLinecap="round" />
+    <path d="M17.6 15.3 C19.4 15.9 20.7 17.3 21.2 20" stroke={color} strokeWidth="1.7" strokeLinecap="round" />
+  </svg>
+)

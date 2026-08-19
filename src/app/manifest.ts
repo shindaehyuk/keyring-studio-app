@@ -13,7 +13,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: '사자키링 — 아크릴 키링 스튜디오',
     short_name: '사자키링',
     description:
-      '귀여운 사자 캐릭터 아크릴 키링을 미리 만나고 사전예약 혜택을 받아보세요.',
+      '귀여운 사자 캐릭터 아크릴 키링을 미리 만나고 사전예약해보세요.',
     lang: 'ko',
     start_url: `${base}/`,
     scope: `${base}/`,

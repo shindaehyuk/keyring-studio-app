@@ -25,16 +25,6 @@ export const NOTICES: Notice[] = [
     isNew: true,
   },
   {
-    id: 'early-bird',
-    date: '2026-08-19',
-    title: '사전예약 혜택 안내',
-    body: [
-      '예약자 전원에게 얼리버드 10% 할인 쿠폰과 한정 스티커 세트를 드려요.',
-      '오픈 당일에는 사전예약 순서대로 가장 먼저 발송해드립니다.',
-    ],
-    isNew: true,
-  },
-  {
     id: 'tshirt-soon',
     date: '2026-08-19',
     title: '사자 티셔츠도 준비 중이에요',

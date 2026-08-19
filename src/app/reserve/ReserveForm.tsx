@@ -54,7 +54,7 @@ export function ReserveForm() {
         <p className="reserve-form__intro">
           오픈 소식을 가장 먼저 받아보세요!
           <br />
-          예약자님께는 얼리버드 할인과 한정 스티커를 드려요.
+          사전예약해주시면 수량을 준비하는 데 큰 도움이 돼요.
         </p>
 
         <label className="field">
