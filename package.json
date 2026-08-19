@@ -3,6 +3,8 @@
   "private": true,
   "version": "0.2.0",
   "scripts": {
+    "prebuild": "node scripts/asset-hashes.mjs",
+    "predev": "node scripts/asset-hashes.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start"
