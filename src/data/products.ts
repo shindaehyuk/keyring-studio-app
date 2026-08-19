@@ -121,11 +121,11 @@ export const PRODUCTS: Product[] = [
   },
   {
     id: 'snack-lion',
-    name: '사자와 간식 아크릴 키링',
-    shortName: '사자와 간식',
+    name: '사자와 회오리감자 아크릴 키링',
+    shortName: '사자와 회오리감자',
     price: 12900,
     description: [
-      '귀여운 사자와 간식이 한 세트!',
+      '귀여운 사자와 회오리감자가 한 세트!',
       '하나의 D링에 두 가지 참이 달린 키링이에요.',
     ],
     category: 'character',
@@ -134,9 +134,9 @@ export const PRODUCTS: Product[] = [
     photo: '/snack-lion.webp',
     detailImage: '/snack-lion-detail.webp',
     specs: [
-      { label: '사이즈', value: '사자 47×43mm · 간식 35×14mm' },
+      { label: '사이즈', value: '사자 47×43mm · 회오리감자 35×14mm' },
       { label: '재질', value: '투명하고 튼튼한 아크릴' },
-      { label: '구성', value: '2종 세트 (사자 + 간식)' },
+      { label: '구성', value: '2종 세트 (사자 + 회오리감자)' },
       { label: '키링 타입', value: '열고 닫기 쉬운 D링' },
     ],
     isNew: true,
