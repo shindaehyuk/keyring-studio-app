@@ -1,5 +1,5 @@
 /** 정식 오픈(사전예약 마감) 시각 */
-export const LAUNCH_DATE = '2026-09-30T10:00:00+09:00'
+export const LAUNCH_DATE = '2026-08-23T09:30:00+09:00'
 
 export const BENEFITS = [
   {
