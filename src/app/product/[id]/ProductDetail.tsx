@@ -21,7 +21,7 @@ export function ProductDetail({ product }: { product: Product }) {
     const url = window.location.href
     try {
       if (navigator.share) {
-        await navigator.share({ title: `${product.name} | SuwonYouth`, url })
+        await navigator.share({ title: `${product.name} | JUICE`, url })
         return
       }
       await navigator.clipboard.writeText(url)

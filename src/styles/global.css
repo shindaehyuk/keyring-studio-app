@@ -1558,3 +1558,27 @@ img.reservation-card__media {
   color: var(--color-sub);
   word-break: keep-all;
 }
+
+/* ---------- 브랜드 로고 락업 ---------- */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.brand__mark {
+  width: auto;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.site-footer__logo.brand {
+  font-size: 16px;
+}
+
+.site-footer__logo.brand .brand__mark {
+  height: 24px;
+}

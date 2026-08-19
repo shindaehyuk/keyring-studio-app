@@ -47,7 +47,7 @@ export function SplashIntro() {
   if (!visible) return null
 
   return (
-    <div className={`splash${leaving ? ' splash--leaving' : ''}`} role="dialog" aria-label="SuwonYouth 인트로">
+    <div className={`splash${leaving ? ' splash--leaving' : ''}`} role="dialog" aria-label="JUICE 인트로">
       <img className="splash__poster" src={POSTER} alt="아크릴 키링 — 귀여운 사자 캐릭터 홍보 포스터" />
       <div className="splash__bottom">
         <button className="button-primary splash__enter" onClick={dismiss}>
