@@ -1279,8 +1279,11 @@ svg {
   margin: 0 auto;
   max-width: 430px;
   overflow: hidden;
-  /* 포스터 상단 배경과 동일한 크림색 — 남는 영역이 이어져 보인다 */
+  /* 포스터 배경과 동일한 크림색 — 남는 영역이 이어져 보인다 */
   background: #fdf1db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   animation: splash-in 0.4s ease;
   transition: opacity 0.35s ease;
 }
@@ -1291,12 +1294,23 @@ svg {
 }
 
 .splash__poster {
-  position: absolute;
-  inset: 0;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center bottom;
+  height: auto;
+  /* 위아래 가장자리를 배경색으로 페이드시켜 경계 없이 중앙 배치 */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 36px,
+    #000 calc(100% - 90px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 36px,
+    #000 calc(100% - 90px),
+    transparent 100%
+  );
 }
 
 .splash__bottom {
@@ -1305,11 +1319,10 @@ svg {
   right: 0;
   bottom: 0;
   padding: 48px 24px calc(24px + env(safe-area-inset-bottom));
-  background: linear-gradient(to top, rgba(60, 42, 20, 0.4), rgba(60, 42, 20, 0));
 }
 
 .splash__enter {
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
 }
 
 @keyframes splash-in {
