@@ -1,9 +1,11 @@
 import Link from 'next/link'
 import { Countdown } from '../components/Countdown'
 import { HeroBanner } from '../components/HeroBanner'
+import { NoticeBanner } from '../components/NoticeBanner'
 import { ProductCard } from '../components/ProductCard'
 import { SplashIntro } from '../components/SplashIntro'
 import { BENEFITS } from '../data/site'
+import { assetPath } from '../lib/assetPath'
 import { PRODUCTS } from '../data/products'
 
 export default function LandingPage() {
@@ -13,13 +15,18 @@ export default function LandingPage() {
     <div className="page">
       <SplashIntro />
       <header className="page-header">
-        <h1 className="page-header__title">SuwonYouth</h1>
+        <h1 className="brand">
+          <img className="brand__mark" src={assetPath('/logo-juice.webp')} alt="" aria-hidden />
+          JUICE
+        </h1>
         <Link href="/reserve" className="header-pill">
           사전예약
         </Link>
       </header>
 
       <HeroBanner />
+
+      <NoticeBanner />
 
       <section className="countdown-section">
         <p className="countdown-section__caption">정식 오픈까지</p>
@@ -70,7 +77,10 @@ export default function LandingPage() {
       </section>
 
       <footer className="site-footer">
-        <p className="site-footer__logo">SuwonYouth</p>
+        <p className="site-footer__logo brand">
+          <img className="brand__mark" src={assetPath('/logo-juice.webp')} alt="" aria-hidden />
+          JUICE
+        </p>
         <p>문의 suwonjuice2026@gmail.com</p>
         <p className="site-footer__fine">본 사이트는 굿즈 홍보 및 사전예약 접수용입니다.</p>
       </footer>

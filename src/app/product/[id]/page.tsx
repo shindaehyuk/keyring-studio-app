@@ -19,7 +19,7 @@ export async function generateMetadata({
     title: product.name,
     description: product.description.join(' '),
     openGraph: {
-      title: `${product.name} | SuwonYouth`,
+      title: `${product.name} | JUICE`,
       description: product.description.join(' '),
     },
   }
