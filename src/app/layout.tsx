@@ -13,11 +13,11 @@ export const metadata: Metadata = {
     template: '%s | JUICE',
   },
   description:
-    '나만의 이야기를 담은 아크릴 키링, JUICE. 귀여운 사자 키링을 미리 만나고 사전예약 혜택을 받아보세요.',
+    '나만의 이야기를 담은 아크릴 키링, JUICE. 귀여운 사자 키링을 미리 만나고 사전예약해보세요.',
   openGraph: {
     title: 'JUICE — 아크릴 키링 사전예약',
     description:
-      '귀여운 아크릴 키링 컬렉션이 곧 오픈해요. 사전예약하고 얼리버드 할인과 한정 스티커를 받아보세요!',
+      '귀여운 아크릴 키링 컬렉션이 곧 오픈해요. 사전예약하고 오픈 소식을 가장 먼저 받아보세요!',
     type: 'website',
     locale: 'ko_KR',
     siteName: 'JUICE',

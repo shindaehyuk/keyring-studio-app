@@ -18,7 +18,7 @@ export const PURPOSE: PurposeItem[] = [
   },
   {
     icon: 'offering',
-    title: '수익금은 헌금에 씁니다',
+    title: '수익금은 헌금에 사용합니다',
     desc: '판매 수익은 전액 청년집회 및 초대의 날에 사용됩니다.',
   },
   {
