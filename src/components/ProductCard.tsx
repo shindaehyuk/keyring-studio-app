@@ -14,8 +14,8 @@ export function ProductCard({ product }: { product: Product }) {
     <Link href={`/product/${product.id}`} className="product-card">
       <div className="product-card__thumb" style={{ background: 'var(--color-bg)' }}>
         <ProductThumb product={product} className="product-card__media" />
-        {product.comingSoon ? (
-          <span className="new-flag new-flag--soon">준비 중</span>
+        {product.originalPrice ? (
+          <span className="new-flag new-flag--sale">SET</span>
         ) : (
           product.isNew && <span className="new-flag">NEW</span>
         )}
@@ -32,8 +32,11 @@ export function ProductCard({ product }: { product: Product }) {
         </button>
       </div>
       <p className="product-card__name">{shortNameOf(product)}</p>
-      <p className={`product-card__price${product.comingSoon ? ' product-card__price--soon' : ''}`}>
-        {product.comingSoon ? '가격 준비 중' : formatPrice(product.price)}
+      <p className="product-card__price">
+        {product.originalPrice && (
+          <span className="product-card__price-was">{formatPrice(product.originalPrice)}</span>
+        )}
+        {formatPrice(product.price)}
       </p>
     </Link>
   )

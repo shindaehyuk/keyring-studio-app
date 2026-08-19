@@ -58,8 +58,9 @@ JUICE
 - 대표 굿즈 3열 그리드(NEW 뱃지·하트), 혜택 카드 3종, 마무리 CTA, 푸터
 
 ### 4.2 컬렉션 (`/collection`)
-- 필터 칩(전체/키링/티셔츠) + 2열 굿즈 그리드
-- 티셔츠는 디자인·가격 확정 전이라 `준비 중` 플레이스홀더로 자리만 노출
+- 필터 칩(전체/키링/티셔츠/세트상품) + 2열 굿즈 그리드
+- 세트상품은 정가를 취소선으로 함께 보여주고 `SET` 배지를 단다
+- 티셔츠는 가격만 확정, 디자인 공개 전이라 플레이스홀더 일러스트 사용
 - `?c=카테고리` 쿼리로 진입 시 해당 필터 프리셋
 
 ### 4.3 굿즈 상세 (`/product/:id`)
@@ -117,21 +118,22 @@ JUICE
 ## 7. 데이터 모델
 
 ```ts
-type CategoryId = 'keyring' | 'tshirt'
+type CategoryId = 'keyring' | 'tshirt' | 'set'
 
 interface Product {
   id: string
   name: string          // 예: '구름 친구 키링'
   shortName?: string    // 카드·픽커용 짧은 이름
   price: number         // 사전예약가 (원)
+  originalPrice?: number // 할인 전 정가 (세트상품)
   description: string[]
   category: CategoryId
   bg: string            // 파스텔 배경 토큰
   art?: ArtId           // SVG 일러스트 식별자 (photo 없을 때)
   photo?: string        // 실물 촬영 사진 (카드 썸네일·상세 상단)
+  photos?: string[]     // 세트 썸네일 — 구성품 사진 모음
   detailImage?: string  // 세로로 긴 상세 설명 이미지
   specs?: Spec[]        // 굿즈 정보 표 (없으면 기본값)
-  comingSoon?: boolean  // 준비 중 — 가격·예약 대신 '준비 중' 표시
   isNew?: boolean
   popular?: boolean     // 랜딩 노출 여부
 }
