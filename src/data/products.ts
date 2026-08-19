@@ -150,19 +150,52 @@ export const PRODUCTS: Product[] = [
     popular: true,
   },
 
-  // ---- 티셔츠: 가격은 확정, 디자인은 공개 예정 ----
-  ...([1, 2, 3] as const).map<Product>((n) => ({
-    id: `tshirt-${n}`,
-    name: `사자 티셔츠 ${n}`,
+  // ---- 티셔츠 3종 (살전 5:16-18 말씀 디자인) ----
+  {
+    id: 'tshirt-1',
+    name: '쉬지말고 기도하라 티셔츠',
+    shortName: '쉬지말고 기도하라',
     price: 18000,
-    description: ['사자 캐릭터를 담은 티셔츠예요.', '디자인은 곧 공개됩니다!'],
-    category: 'tshirt' as const,
-    bg: 'var(--color-mint)',
+    description: ['WITHOUT PRAY CEASING — 말씀을 담은 티셔츠예요.', '앞면에 프린트가 들어가요.'],
+    category: 'tshirt',
+    bg: 'var(--color-surface)',
+    photo: '/tshirt-1.webp',
     specs: [
       { label: '구성', value: '티셔츠 1개' },
-      { label: '디자인', value: '공개 예정' },
+      { label: '색상', value: '그레이' },
+      { label: '프린트', value: '앞면' },
     ],
-  })),
+  },
+  {
+    id: 'tshirt-2',
+    name: '범사에 감사하라 티셔츠',
+    shortName: '범사에 감사하라',
+    price: 18000,
+    description: ['GIVE THANKS IN EVERYTHING — 말씀을 담은 티셔츠예요.', '앞면에 프린트가 들어가요.'],
+    category: 'tshirt',
+    bg: 'var(--color-blue)',
+    photo: '/tshirt-2.webp',
+    specs: [
+      { label: '구성', value: '티셔츠 1개' },
+      { label: '색상', value: '네이비' },
+      { label: '프린트', value: '앞면' },
+    ],
+  },
+  {
+    id: 'tshirt-3',
+    name: '항상 기뻐하라 티셔츠',
+    shortName: '항상 기뻐하라',
+    price: 18000,
+    description: ['ALWAYS REJOICE — 말씀을 담은 티셔츠예요.', '뒷면 큰 프린트와 앞 가슴 포인트가 들어가요.'],
+    category: 'tshirt',
+    bg: 'var(--color-pink)',
+    photo: '/tshirt-3.webp',
+    specs: [
+      { label: '구성', value: '티셔츠 1개' },
+      { label: '색상', value: '화이트' },
+      { label: '프린트', value: '앞 가슴 + 뒷면' },
+    ],
+  },
 
   // ---- 세트상품: 낱개로 살 때보다 저렴한 구성 ----
   {
@@ -208,6 +241,7 @@ export const PRODUCTS: Product[] = [
     description: ['티셔츠 2종을 함께 담은 세트예요.', '낱개로 살 때보다 1,000원 저렴해요!'],
     category: 'set',
     bg: 'var(--color-cream)',
+    photos: ['/tshirt-1.webp', '/tshirt-2.webp'],
     specs: [
       { label: '구성', value: '티셔츠 2개' },
       { label: '낱개 가격', value: '티셔츠 1개 18,000원' },
@@ -222,6 +256,7 @@ export const PRODUCTS: Product[] = [
     description: ['티셔츠 3종을 모두 담은 세트예요.', '낱개로 살 때보다 2,000원 저렴해요!'],
     category: 'set',
     bg: 'var(--color-pink)',
+    photos: ['/tshirt-1.webp', '/tshirt-2.webp', '/tshirt-3.webp'],
     specs: [
       { label: '구성', value: '티셔츠 3개' },
       { label: '낱개 가격', value: '티셔츠 1개 18,000원' },

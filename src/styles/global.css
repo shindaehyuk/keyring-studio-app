@@ -330,6 +330,10 @@ svg {
 /* 가로 스크롤 + 스냅으로 스와이프 캐러셀 구현 (라이브러리 없이) */
 .hero__track {
   display: flex;
+  /* 키링 배너(16:9)와 티셔츠 배너(3:1)가 섞여 있어 높이가 다르다.
+     트랙 높이는 스크립트가 현재 슬라이드에 맞춰 잡고, 이미지는 가운데 정렬한다. */
+  align-items: center;
+  transition: height 0.25s ease;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
