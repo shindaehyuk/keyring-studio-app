@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Countdown } from '../components/Countdown'
 import { HeroBanner } from '../components/HeroBanner'
+import { NoticeBanner } from '../components/NoticeBanner'
 import { ProductCard } from '../components/ProductCard'
 import { SplashIntro } from '../components/SplashIntro'
 import { BENEFITS } from '../data/site'
@@ -20,6 +21,8 @@ export default function LandingPage() {
       </header>
 
       <HeroBanner />
+
+      <NoticeBanner />
 
       <section className="countdown-section">
         <p className="countdown-section__caption">정식 오픈까지</p>

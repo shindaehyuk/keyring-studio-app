@@ -1403,3 +1403,158 @@ img.reservation-card__media {
 .button-primary:disabled:active {
   transform: none;
 }
+
+/* ---------- 공지사항 배너 ---------- */
+.notice {
+  padding: 0 20px 24px;
+  margin-top: -12px;
+}
+
+.notice-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 14px 14px 16px;
+  border: 1px solid var(--color-accent);
+  border-radius: 14px;
+  background: var(--color-bg);
+  text-align: left;
+}
+
+.notice-banner:active {
+  background: var(--color-surface);
+}
+
+.notice-banner__icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--color-lavender);
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.notice-banner__text {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notice-banner__badge {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--color-lavender);
+  color: var(--color-accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* ---------- 공지사항 바텀시트 ---------- */
+.notice-sheet {
+  max-height: 78dvh;
+  display: flex;
+  flex-direction: column;
+  /* 아래에서 위로 올라오는 등장 */
+  animation: notice-sheet-up 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes notice-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.notice-sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.notice-sheet__head .sheet__title {
+  margin-bottom: 0;
+}
+
+.notice-list {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.notice-item {
+  border-bottom: 1px solid var(--color-line);
+}
+
+.notice-item:last-child {
+  border-bottom: none;
+}
+
+.notice-item__head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 10px;
+  width: 100%;
+  padding: 16px 2px;
+  text-align: left;
+}
+
+.notice-item__meta {
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-sub);
+}
+
+.notice-item__new {
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: var(--color-lavender);
+  color: var(--color-accent);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.notice-item__title {
+  grid-column: 1;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  word-break: keep-all;
+}
+
+.notice-item__caret {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  display: grid;
+  place-items: center;
+  transform: rotate(90deg);
+  transition: transform 0.2s ease;
+}
+
+.notice-item__caret.open {
+  transform: rotate(-90deg);
+}
+
+.notice-item__body {
+  padding: 0 2px 18px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--color-sub);
+  word-break: keep-all;
+}
