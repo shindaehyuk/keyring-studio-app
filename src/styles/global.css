@@ -1270,3 +1270,66 @@ svg {
   color: var(--color-faint);
   text-decoration: underline;
 }
+
+/* ---------- 진입 인트로 (포스터 스플래시) ---------- */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  margin: 0 auto;
+  max-width: 430px;
+  overflow: hidden;
+  /* 포스터 배경과 동일한 크림색 — 남는 영역이 이어져 보인다 */
+  background: #fdf1db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: splash-in 0.4s ease;
+  transition: opacity 0.35s ease;
+}
+
+.splash--leaving {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.splash__poster {
+  width: 100%;
+  height: auto;
+  /* 위아래 가장자리를 배경색으로 페이드시켜 경계 없이 중앙 배치 */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 36px,
+    #000 calc(100% - 90px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 36px,
+    #000 calc(100% - 90px),
+    transparent 100%
+  );
+}
+
+.splash__bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 48px 24px calc(24px + env(safe-area-inset-bottom));
+}
+
+.splash__enter {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
+}
+
+@keyframes splash-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
