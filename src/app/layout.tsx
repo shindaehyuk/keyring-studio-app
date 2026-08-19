@@ -4,6 +4,8 @@ import { AppStoreProvider } from '../store/AppStore'
 import { BottomNav } from '../components/BottomNav'
 import '../styles/global.css'
 
+const base = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
+
 export const metadata: Metadata = {
   title: {
     default: 'Keyring Studio — 아크릴 키링 사전예약',
@@ -19,7 +21,20 @@ export const metadata: Metadata = {
     locale: 'ko_KR',
     siteName: 'Keyring Studio',
   },
-  icons: { icon: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/favicon.svg` },
+  manifest: `${base}/manifest.webmanifest`,
+  icons: {
+    icon: [
+      { url: `${base}/favicon.svg`, type: 'image/svg+xml' },
+      { url: `${base}/icon-192.png`, sizes: '192x192', type: 'image/png' },
+    ],
+    apple: `${base}/apple-touch-icon.png`,
+  },
+  // 홈 화면에 추가했을 때 아이콘 아래 표시되는 이름
+  appleWebApp: {
+    capable: true,
+    title: '사자키링',
+    statusBarStyle: 'default',
+  },
 }
 
 export const viewport: Viewport = {
