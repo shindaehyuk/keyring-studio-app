@@ -71,11 +71,7 @@ export default function LandingPage() {
 
       <footer className="site-footer">
         <p className="site-footer__logo">SuwonYouth</p>
-        <p>
-          문의 hello@keyringstudio.kr
-          <br />
-          Instagram @keyring.studio
-        </p>
+        <p>문의 suwonjuice2026@gmail.com</p>
         <p className="site-footer__fine">본 사이트는 굿즈 홍보 및 사전예약 접수용입니다.</p>
       </footer>
     </div>
