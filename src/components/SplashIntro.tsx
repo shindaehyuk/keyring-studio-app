@@ -1,12 +1,17 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { assetPath } from '../lib/assetPath'
 
 export const SEEN_KEY = 'ks:intro-seen'
 export const SEEN_ATTR = 'data-intro-seen'
 
 const POSTER = assetPath('/intro-poster.webp')
+
+/** 나가는 애니메이션 길이 — CSS의 splash-out과 맞춘다 */
+const LEAVE_MS = 420
+/** 포스터가 끝내 안 뜨더라도 버튼은 보여준다 */
+const READY_FALLBACK_MS = 1200
 
 /**
  * 첫 진입 시 화면 전체를 덮는 포스터 인트로. 세션당 1회만 노출.
@@ -19,9 +24,18 @@ const POSTER = assetPath('/intro-poster.webp')
 export function SplashIntro() {
   const [visible, setVisible] = useState(true)
   const [leaving, setLeaving] = useState(false)
+  // 포스터가 준비된 뒤에 등장 애니메이션을 시작한다 — 빈 화면에서 이미지가 튀어나오지 않게
+  const [ready, setReady] = useState(false)
+  const posterRef = useRef<HTMLImageElement>(null)
 
   useEffect(() => {
     if (sessionStorage.getItem(SEEN_KEY)) setVisible(false)
+  }, [])
+
+  useEffect(() => {
+    if (posterRef.current?.complete) setReady(true)
+    const timer = window.setTimeout(() => setReady(true), READY_FALLBACK_MS)
+    return () => window.clearTimeout(timer)
   }, [])
 
   useEffect(() => {
@@ -37,18 +51,29 @@ export function SplashIntro() {
     sessionStorage.setItem(SEEN_KEY, '1')
     setLeaving(true)
     window.setTimeout(() => {
-      // 페이드가 끝난 뒤에 표시 — 먼저 달면 사라지는 애니메이션이 잘린다.
+      // 애니메이션이 끝난 뒤에 표시 — 먼저 달면 사라지는 애니메이션이 잘린다.
       // (클라이언트 이동으로 홈에 다시 와도 번쩍이지 않게 한다)
       document.documentElement.setAttribute(SEEN_ATTR, '1')
       setVisible(false)
-    }, 350)
+    }, LEAVE_MS)
   }
 
   if (!visible) return null
 
   return (
-    <div className={`splash${leaving ? ' splash--leaving' : ''}`} role="dialog" aria-label="JUICE 인트로">
-      <img className="splash__poster" src={POSTER} alt="아크릴 키링 — 귀여운 사자 캐릭터 홍보 포스터" />
+    <div
+      className={`splash${ready ? ' splash--ready' : ''}${leaving ? ' splash--leaving' : ''}`}
+      role="dialog"
+      aria-label="JUICE 인트로"
+    >
+      <img
+        ref={posterRef}
+        className="splash__poster"
+        src={POSTER}
+        alt="아크릴 키링 — 귀여운 사자 캐릭터 홍보 포스터"
+        onLoad={() => setReady(true)}
+        onError={() => setReady(true)}
+      />
       <div className="splash__bottom">
         <button className="button-primary splash__enter" onClick={dismiss}>
           구경하러 가기

@@ -1309,13 +1309,33 @@ svg {
   justify-content: center;
   /* 하단 버튼 영역만큼 비워, 포스터가 버튼에 가리지 않게 한다 */
   padding-bottom: calc(118px + env(safe-area-inset-bottom));
-  animation: splash-in 0.4s ease;
-  transition: opacity 0.35s ease;
+  /* 배경색은 처음부터 칠해둔다 — 흰 화면에서 크림색으로 넘어가 보이지 않게 */
+  will-change: opacity, transform;
 }
 
+/*
+ * 나갈 때는 단순 페이드 대신 살짝 확대되며 걷힌다.
+ * 절반까지는 불투명하게 유지해, 뒤에 완성돼 있는 홈 화면과
+ * 포스터가 겹쳐 비치는(디졸브처럼 보이는) 구간을 없앤다.
+ */
 .splash--leaving {
-  opacity: 0;
+  animation: splash-out 0.42s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   pointer-events: none;
+}
+
+@keyframes splash-out {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.06);
+  }
 }
 
 /* 이미 인트로를 본 세션 — 첫 페인트부터 감춰 새로고침 시 번쩍임을 막는다 */
@@ -1358,12 +1378,68 @@ html[data-intro-seen='1'] .splash {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
 }
 
-@keyframes splash-in {
+/*
+ * 포스터가 준비되기 전에는 숨겨두고, 로드된 뒤 포스터 → 버튼 순서로 올라온다.
+ * 통째로 페이드인하면 빈 크림색 화면에 이미지가 뒤늦게 튀어나와 보인다.
+ */
+.splash__poster,
+.splash__bottom {
+  opacity: 0;
+}
+
+.splash--ready .splash__poster {
+  animation: splash-poster-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.splash--ready .splash__bottom {
+  animation: splash-bottom-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.16s both;
+}
+
+@keyframes splash-poster-in {
   from {
     opacity: 0;
+    transform: translateY(10px) scale(0.985);
   }
   to {
     opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes splash-bottom-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash--ready .splash__poster,
+  .splash--ready .splash__bottom {
+    animation: splash-fade-in 0.2s ease both;
+  }
+
+  .splash--leaving {
+    animation: splash-fade-out 0.2s ease forwards;
+  }
+
+  @keyframes splash-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes splash-fade-out {
+    to {
+      opacity: 0;
+    }
   }
 }
 
