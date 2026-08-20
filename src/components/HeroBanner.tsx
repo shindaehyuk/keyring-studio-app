@@ -8,14 +8,14 @@ import { assetPath } from '../lib/assetPath'
 const SLIDES = [
   {
     image: '/banner-lion-1.webp',
-    alt: 'LION KEYRING — 사랑스러운 아크릴 키링',
+    alt: 'LION KEYRING — 귀여운 사자 키링 컬렉션',
     href: '/collection',
     width: 1672,
     height: 941,
   },
   {
     image: '/banner-lion-2.webp',
-    alt: 'LION KEYRING — 귀여운 사자 키링 컬렉션',
+    alt: 'LION KEYRING — 사랑스러운 아크릴 키링',
     href: '/collection',
     width: 1672,
     height: 941,
@@ -25,21 +25,21 @@ const SLIDES = [
     alt: 'WITHOUT PRAY CEASING — 쉬지말고 기도하라 티셔츠',
     href: '/product/tshirt-1',
     width: 1672,
-    height: 557,
+    height: 941,
   },
   {
     image: '/banner-tshirt-2.webp',
     alt: 'GIVE THANKS IN EVERYTHING — 범사에 감사하라 티셔츠',
     href: '/product/tshirt-2',
     width: 1672,
-    height: 557,
+    height: 941,
   },
   {
     image: '/banner-tshirt-3.webp',
     alt: 'ALWAYS REJOICE — 항상 기뻐하라 티셔츠',
     href: '/product/tshirt-3',
     width: 1672,
-    height: 557,
+    height: 941,
   },
 ]
 
@@ -56,8 +56,8 @@ export function HeroBanner() {
   const [index, setIndex] = useState(0)
   const [trackHeight, setTrackHeight] = useState<number>()
 
-  // 배너마다 비율이 달라서(키링 16:9 / 티셔츠 3:1) 트랙 높이를 현재 슬라이드에 맞춘다.
-  // 그래야 가로로 긴 배너에서 위아래 빈 공간이 생기지 않는다.
+  // 비율이 다른 배너를 섞어도 위아래 빈 공간이 생기지 않도록
+  // 트랙 높이를 현재 슬라이드 비율에 맞춘다.
   useEffect(() => {
     const measure = () => {
       const el = trackRef.current
