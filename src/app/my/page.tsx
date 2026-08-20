@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { KeyringArt } from '../../art/KeyringArt'
-import { getProduct, shortNameOf } from '../../data/products'
+import { getProduct } from '../../data/products'
+import { summarizeReservation } from '../../lib/reservationSummary'
 import { useAppStore } from '../../store/AppStore'
 import { ProductThumb } from '../../components/ProductThumb'
 
@@ -46,12 +47,11 @@ export default function MyReservationsPage() {
                   )
                 })}
               </div>
-              <p className="reservation-card__names">
-                {reservation.productIds
-                  .map((id) => { const p = getProduct(id); return p && shortNameOf(p) })
-                  .filter(Boolean)
-                  .join(', ')}
-              </p>
+              <ul className="reservation-card__names">
+                {summarizeReservation(reservation).map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
               <button
                 className="reservation-card__cancel"
                 onClick={() => {

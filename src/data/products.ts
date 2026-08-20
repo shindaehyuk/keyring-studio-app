@@ -15,6 +15,12 @@ export const CATEGORIES: Category[] = [
 
 export const KEYRING_TYPES = ['기본 고리', '고리형', '체인형'] as const
 
+export const SIZES = ['S', 'M', 'L', 'XL', 'XXL'] as const
+export type SizeId = (typeof SIZES)[number]
+
+/** 사이즈별 남은 수량. 없는 사이즈는 아예 준비하지 않은 것 */
+export type SizeStock = Partial<Record<SizeId, number>>
+
 export interface Spec {
   label: string
   value: string
@@ -29,6 +35,18 @@ export interface SetItem {
   photo?: string
   /** '택 1' 처럼 칸 아래에 붙는 짧은 설명 */
   note?: string
+}
+
+/**
+ * 세트를 예약할 때 고르는 구성 한 덩어리.
+ * 세트에는 따로 재고를 두지 않고, 여기서 고른 낱개 상품의 수량을 깎는다.
+ */
+export interface SetChoice {
+  /** 고를 수 있는 낱개 상품 id */
+  from: string[]
+  /** 몇 개를 골라야 하는지 */
+  count: number
+  label: string
 }
 
 export interface Product {
@@ -54,6 +72,12 @@ export interface Product {
   detailCaption?: string
   /** 세트 구성품 — 상세 페이지에 썸네일과 이름을 보여준다 */
   items?: SetItem[]
+  /** 세트를 예약할 때 골라야 하는 구성 */
+  choices?: SetChoice[]
+  /** 사이즈가 없는 상품(키링)의 남은 수량 */
+  stock?: number
+  /** 사이즈별 남은 수량(티셔츠) */
+  sizeStock?: SizeStock
   /** 굿즈 정보 표. 없으면 기본값 사용 */
   specs?: Spec[]
   isNew?: boolean
@@ -72,7 +96,8 @@ const LION_SET_DESC = ['하나의 D링에 두 가지 참이 달린 키링이에�
 const TSHIRT_DETAIL_CAPTION =
   '본 이미지는 디자인 이해를 돕기 위한 시안으로, 실제 인쇄 크기 및 위치는 제품에 따라 약간의 차이가 있을 수 있어요.'
 
-/** 세트에서 티셔츠를 고를 때 쓰는 구성품 목록 */
+/** 세트에서 고를 수 있는 구성품 목록 */
+const KEYRING_IDS = ['sponge-lion', 'spatula-lion', 'coffee-lion', 'snack-lion', 'bible-lion']
 const TSHIRT_ITEMS = ['tshirt-1', 'tshirt-2', 'tshirt-3']
 
 export const PRODUCTS: Product[] = [
@@ -93,6 +118,7 @@ export const PRODUCTS: Product[] = [
       { label: '키링 타입', value: '열고 닫기 쉬운 D링' },
     ],
     isNew: true,
+    stock: 50,
     popular: true,
   },
   {
@@ -112,6 +138,7 @@ export const PRODUCTS: Product[] = [
       { label: '키링 타입', value: '열고 닫기 쉬운 D링' },
     ],
     isNew: true,
+    stock: 50,
     popular: true,
   },
   {
@@ -131,6 +158,7 @@ export const PRODUCTS: Product[] = [
       { label: '키링 타입', value: '열고 닫기 쉬운 D링' },
     ],
     isNew: true,
+    stock: 50,
     popular: true,
   },
   {
@@ -150,6 +178,7 @@ export const PRODUCTS: Product[] = [
       { label: '키링 타입', value: '열고 닫기 쉬운 D링' },
     ],
     isNew: true,
+    stock: 50,
     popular: true,
   },
   {
@@ -169,6 +198,7 @@ export const PRODUCTS: Product[] = [
       { label: '키링 타입', value: '열고 닫기 쉬운 D링' },
     ],
     isNew: true,
+    stock: 50,
     popular: true,
   },
 
@@ -185,6 +215,7 @@ export const PRODUCTS: Product[] = [
     category: 'tshirt',
     bg: 'var(--color-surface)',
     photo: '/tshirt-1.webp',
+    sizeStock: { M: 5, L: 18, XL: 10, XXL: 2 },
     // 이 상세 이미지에는 시안 안내 문구가 들어 있어 detailCaption을 따로 붙이지 않는다
     detailImage: '/tshirt-1-detail.webp',
     specs: [
@@ -208,6 +239,7 @@ export const PRODUCTS: Product[] = [
     category: 'tshirt',
     bg: 'var(--color-blue)',
     photo: '/tshirt-2.webp',
+    sizeStock: { S: 3, M: 5, L: 10, XL: 10, XXL: 2 },
     detailImage: '/tshirt-2-detail.webp',
     detailCaption: TSHIRT_DETAIL_CAPTION,
     specs: [
@@ -231,6 +263,7 @@ export const PRODUCTS: Product[] = [
     category: 'tshirt',
     bg: 'var(--color-pink)',
     photo: '/tshirt-3.webp',
+    sizeStock: { S: 3, M: 5, L: 15, XL: 10, XXL: 2 },
     detailImage: '/tshirt-3-detail.webp',
     detailCaption: TSHIRT_DETAIL_CAPTION,
     specs: [
@@ -262,6 +295,7 @@ export const PRODUCTS: Product[] = [
       { productId: 'snack-lion' },
       { productId: 'bible-lion' },
     ],
+    choices: [{ from: KEYRING_IDS, count: 3, label: '키링 3개' }],
     specs: [
       { label: '구성', value: '키링 3개 (5종 중 택 3)' },
       { label: '낱개 가격', value: '키링 1개 4,000원' },
@@ -286,6 +320,7 @@ export const PRODUCTS: Product[] = [
       ...TSHIRT_ITEMS.map((productId) => ({ productId, note: '택 1' })),
       { name: '명찰 키링', photo: '/nametag-keyring.webp', note: '세트 전용' },
     ],
+    choices: [{ from: TSHIRT_ITEMS, count: 1, label: '티셔츠 1개' }],
     specs: [
       { label: '구성', value: '티셔츠 1개 (3종 중 택 1) + 명찰 키링 1개' },
       { label: '명찰 키링', value: '세트 전용 (낱개 판매 없음)' },
@@ -305,6 +340,7 @@ export const PRODUCTS: Product[] = [
     bg: 'var(--color-cream)',
     photos: ['/tshirt-1.webp', '/tshirt-2.webp'],
     items: TSHIRT_ITEMS.map((productId) => ({ productId, note: '택 2' })),
+    choices: [{ from: TSHIRT_ITEMS, count: 2, label: '티셔츠 2개' }],
     specs: [
       { label: '구성', value: '티셔츠 2개 (3종 중 택 2)' },
       { label: '낱개 가격', value: '티셔츠 1개 18,000원' },
@@ -324,6 +360,7 @@ export const PRODUCTS: Product[] = [
     bg: 'var(--color-pink)',
     photos: ['/tshirt-1.webp', '/tshirt-2.webp', '/tshirt-3.webp'],
     items: TSHIRT_ITEMS.map((productId) => ({ productId })),
+    choices: [{ from: TSHIRT_ITEMS, count: 3, label: '티셔츠 3개' }],
     specs: [
       { label: '구성', value: '티셔츠 3개 (3종 전부)' },
       { label: '낱개 가격', value: '티셔츠 1개 18,000원' },
@@ -338,3 +375,31 @@ export const shortNameOf = (product: Product) =>
   product.shortName ?? product.name.replace(' 키링', '')
 
 export const formatPrice = (won: number) => `${won.toLocaleString('ko-KR')}원`
+
+/** 준비한 사이즈만 순서대로 (없는 사이즈는 건너뛴다) */
+export const sizesOf = (product: Product) =>
+  SIZES.filter((size) => product.sizeStock?.[size] !== undefined)
+
+/** 상품 하나의 남은 수량 합계. 세트는 재고를 따로 두지 않아 0 */
+export const totalStockOf = (product: Product) => {
+  if (product.sizeStock) {
+    return Object.values(product.sizeStock).reduce((sum, n) => sum + n, 0)
+  }
+  return product.stock ?? 0
+}
+
+/** 재고를 관리하는 상품인지 — 세트는 구성품 재고를 따라간다 */
+export const hasStock = (product: Product) =>
+  product.stock !== undefined || product.sizeStock !== undefined
+
+/** 남은 수량을 세는 단위. 티셔츠는 사이즈까지 구분한다 */
+export const stockKey = (productId: string, size?: SizeId) =>
+  size ? `${productId}:${size}` : productId
+
+/** 해당 단위로 준비한 수량 */
+export const stockFor = (productId: string, size?: SizeId) => {
+  const product = getProduct(productId)
+  if (!product) return 0
+  if (size) return product.sizeStock?.[size] ?? 0
+  return product.stock ?? 0
+}

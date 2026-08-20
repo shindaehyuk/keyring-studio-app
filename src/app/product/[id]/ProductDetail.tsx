@@ -9,6 +9,7 @@ import {
   formatPrice,
   getProduct,
   shortNameOf,
+  sizesOf,
   type Product,
 } from '../../../data/products'
 import { assetPath } from '../../../lib/assetPath'
@@ -100,7 +101,30 @@ export function ProductDetail({ product }: { product: Product }) {
               <span className="option-row__value">{spec.value}</span>
             </div>
           ))}
+          {product.stock !== undefined && (
+            <div className="option-row">
+              <span className="option-row__label">남은 수량</span>
+              <span className="option-row__value">{product.stock}개</span>
+            </div>
+          )}
         </div>
+
+        {product.sizeStock && (
+          <>
+            <p className="option-title">사이즈별 남은 수량</p>
+            <ul className="stock-grid">
+              {sizesOf(product).map((size) => {
+                const left = product.sizeStock?.[size] ?? 0
+                return (
+                  <li key={size} className={`stock-cell${left === 0 ? ' out' : ''}`}>
+                    <span className="stock-cell__size">{size}</span>
+                    <span className="stock-cell__left">{left === 0 ? '품절' : `${left}개`}</span>
+                  </li>
+                )
+              })}
+            </ul>
+          </>
+        )}
 
         {product.items && product.items.length > 0 && (
           <>

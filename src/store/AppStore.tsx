@@ -11,11 +11,24 @@ import {
   type ReactNode,
 } from 'react'
 
+import type { SizeId } from '../data/products'
+
+/** 실제로 빠져나가는 낱개 단위 하나 */
+export interface ReservationItem {
+  productId: string
+  size?: SizeId
+  /** 세트로 고른 구성품이면 그 세트 id */
+  viaSet?: string
+}
+
 export interface Reservation {
   id: string
   name: string
   contact: string
+  /** 예약 목록에 보여줄 상품·세트 id */
   productIds: string[]
+  /** 사이즈까지 반영한 실제 구성. 예전 예약 기록에는 없을 수 있다 */
+  items?: ReservationItem[]
   createdAt: string
 }
 
