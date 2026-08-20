@@ -11,6 +11,7 @@ import { PRODUCTS } from '../data/products'
 
 export default function LandingPage() {
   const featured = PRODUCTS.filter((p) => p.popular)
+  const tshirts = PRODUCTS.filter((p) => p.category === 'tshirt')
 
   return (
     <div className="page">
@@ -42,6 +43,18 @@ export default function LandingPage() {
         </div>
         <div className="product-grid">
           {featured.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      </section>
+
+      <section className="home-section">
+        <div className="section-heading">
+          <h2>말씀을 입는 티셔츠</h2>
+          <Link href="/collection?c=tshirt">전체보기</Link>
+        </div>
+        <div className="product-grid">
+          {tshirts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
