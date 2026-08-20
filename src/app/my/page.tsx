@@ -11,6 +11,7 @@ import {
   type ReservationRow,
 } from '../../lib/reservations'
 import { EDIT_HANDOFF_KEY } from '../../lib/reservationEdit'
+import { ButtonSpinner, LoadingOverlay } from '../../components/Loading'
 import { isSupabaseConfigured } from '../../lib/supabase'
 import { useAppStore } from '../../store/AppStore'
 
@@ -47,6 +48,8 @@ export default function LookupPage() {
   /** 취소 확인 모달에 올라온 예약 */
   const [confirming, setConfirming] = useState<ReservationRow | null>(null)
   const [cancelling, setCancelling] = useState(false)
+  /** 수정 화면으로 넘어가는 동안 */
+  const [movingToEdit, setMovingToEdit] = useState(false)
 
   const search = async (e: FormEvent) => {
     e.preventDefault()
@@ -84,8 +87,9 @@ export default function LookupPage() {
   }
 
   const startEdit = (row: ReservationRow) => {
-    if (!credentials) return
+    if (!credentials || movingToEdit) return
     sessionStorage.setItem(EDIT_HANDOFF_KEY, JSON.stringify({ row, credentials }))
+    setMovingToEdit(true)
     router.push('/reserve')
   }
 
@@ -143,6 +147,7 @@ export default function LookupPage() {
             </label>
 
             <button type="submit" className="button-primary" disabled={searching}>
+              {searching && <ButtonSpinner />}
               {searching ? '조회하는 중…' : '예약 조회하기'}
             </button>
           </form>
@@ -175,7 +180,11 @@ export default function LookupPage() {
                       <strong>{formatPrice(row.total_price ?? 0)}</strong>
                     </p>
                     <div className="reservation-card__actions">
-                      <button className="reservation-card__edit" onClick={() => startEdit(row)}>
+                      <button
+                        className="reservation-card__edit"
+                        disabled={movingToEdit}
+                        onClick={() => startEdit(row)}
+                      >
                         예약 수정
                       </button>
                       <button
@@ -191,6 +200,17 @@ export default function LookupPage() {
             ))}
         </>
       )}
+
+      <LoadingOverlay
+        active={searching || cancelling || movingToEdit}
+        message={
+          cancelling
+            ? '예약을 취소하는 중…'
+            : movingToEdit
+              ? '예약 수정 화면을 여는 중…'
+              : '예약을 찾는 중…'
+        }
+      />
 
       {confirming && (
         <div
@@ -220,6 +240,7 @@ export default function LookupPage() {
                 disabled={cancelling}
                 onClick={() => void confirmCancel()}
               >
+                {cancelling && <ButtonSpinner />}
                 {cancelling ? '취소하는 중…' : '예약 취소'}
               </button>
             </div>
