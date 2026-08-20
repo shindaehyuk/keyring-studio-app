@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { KeyringArt } from '../../../art/KeyringArt'
 import { PURPOSE } from '../../../data/site'
 import { PurposeIcon } from '../../../components/PurposeIcon'
-import { getProduct, shortNameOf } from '../../../data/products'
+import { summarizeReservation } from '../../../lib/reservationSummary'
 import { useAppStore } from '../../../store/AppStore'
 
 export function DoneView() {
@@ -32,14 +32,13 @@ export function DoneView() {
               <span>예약 번호</span>
               <strong>{reservation.id}</strong>
             </div>
-            <div className="done__row">
+            <div className="done__row done__row--list">
               <span>예약 굿즈</span>
-              <strong>
-                {reservation.productIds
-                  .map((id) => { const p = getProduct(id); return p && shortNameOf(p) })
-                  .filter(Boolean)
-                  .join(', ')}
-              </strong>
+              <ul className="done__items">
+                {summarizeReservation(reservation).map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
             </div>
           </div>
         )}

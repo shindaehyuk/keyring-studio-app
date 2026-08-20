@@ -22,7 +22,7 @@ const SLIDES = [
   },
   {
     image: '/banner-tshirt-1.webp',
-    alt: 'WITHOUT PRAY CEASING — 쉬지말고 기도하라 티셔츠',
+    alt: 'PRAY WITHOUT CEASING — 쉬지말고 기도하라 티셔츠',
     href: '/product/tshirt-1',
     width: 1672,
     height: 941,

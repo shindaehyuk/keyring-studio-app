@@ -3,12 +3,12 @@
 import Link from 'next/link'
 import { KeyringArt } from '../../art/KeyringArt'
 import { ProductCard } from '../../components/ProductCard'
-import { PRODUCTS } from '../../data/products'
+import { LISTED_PRODUCTS } from '../../data/products'
 import { useAppStore } from '../../store/AppStore'
 
 export default function WishlistPage() {
   const { wishlist } = useAppStore()
-  const products = PRODUCTS.filter((p) => wishlist.includes(p.id))
+  const products = LISTED_PRODUCTS.filter((p) => wishlist.includes(p.id))
 
   return (
     <div className="page">

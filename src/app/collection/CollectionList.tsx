@@ -3,14 +3,15 @@
 import { useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { ProductCard } from '../../components/ProductCard'
-import { CATEGORIES, PRODUCTS, type CategoryId } from '../../data/products'
+import { CATEGORIES, LISTED_PRODUCTS, type CategoryId } from '../../data/products'
 
 export function CollectionList() {
   const initialCategory = useSearchParams().get('c')
   const [active, setActive] = useState<CategoryId | 'all'>(
     CATEGORIES.some((c) => c.id === initialCategory) ? (initialCategory as CategoryId) : 'all',
   )
-  const products = active === 'all' ? PRODUCTS : PRODUCTS.filter((p) => p.category === active)
+  const products =
+    active === 'all' ? LISTED_PRODUCTS : LISTED_PRODUCTS.filter((p) => p.category === active)
 
   return (
     <div className="page">
