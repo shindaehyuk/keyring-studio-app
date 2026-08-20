@@ -17,6 +17,7 @@ import {
 } from '../../data/products'
 import { buildReservation, useAppStore, type ReservationItem } from '../../store/AppStore'
 import { fetchReservedCounts, saveReservation } from '../../lib/reservations'
+import { isSupabaseConfigured } from '../../lib/supabase'
 import { ProductThumb } from '../../components/ProductThumb'
 
 /** 낱개 하나를 고른 결과 */
@@ -340,6 +341,13 @@ export function ReserveForm() {
       </header>
 
       <form className="reserve-form" onSubmit={submit}>
+        {!isSupabaseConfigured && (
+          <p className="reserve-form__warn">
+            지금은 접수 내용이 <strong>서버에 저장되지 않습니다.</strong> 예약해주셔도 담당자가
+            확인할 수 없으니, 이 문구가 보이면 담당자에게 알려주세요.
+          </p>
+        )}
+
         <p className="reserve-form__intro">
           오픈 소식을 가장 먼저 받아보세요!
           <br />

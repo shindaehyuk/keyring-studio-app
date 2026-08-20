@@ -18,7 +18,15 @@ export interface ReservationRow {
  */
 export async function saveReservation(reservation: Reservation) {
   const supabase = getSupabase()
-  if (!supabase) return { ok: true as const }
+  if (!supabase) {
+    // 설정이 없으면 접수 내용이 이 브라우저 밖으로 나가지 않는다.
+    // 화면에도 안내를 띄우지만, 개발자 도구에서도 바로 보이게 남긴다.
+    console.warn(
+      '[JUICE] Supabase가 연결되어 있지 않아 예약이 서버에 저장되지 않았습니다. ' +
+        'NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY 를 설정하고 다시 배포하세요.',
+    )
+    return { ok: true as const }
+  }
 
   const { error } = await supabase.from('reservations').insert({
     id: reservation.id,

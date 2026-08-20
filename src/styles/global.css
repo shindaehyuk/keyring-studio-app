@@ -1061,6 +1061,25 @@ svg {
   padding: 8px 20px 32px;
 }
 
+.reserve-form__warn {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fdecec;
+  border: 1px solid #f5c6c6;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #a33a3a;
+  word-break: keep-all;
+}
+
+.admin__empty code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--color-surface);
+  font-size: 11.5px;
+  word-break: break-all;
+}
+
 .reserve-form__intro {
   font-size: 14px;
   line-height: 1.65;
