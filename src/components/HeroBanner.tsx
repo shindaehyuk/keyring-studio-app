@@ -14,6 +14,13 @@ const SLIDES = [
     height: 941,
   },
   {
+    image: '/banner-lion-2.webp',
+    alt: 'LION KEYRING — 사랑스러운 아크릴 키링',
+    href: '/collection',
+    width: 1672,
+    height: 941,
+  },
+  {
     image: '/banner-tshirt-1.webp',
     alt: 'WITHOUT PRAY CEASING — 쉬지말고 기도하라 티셔츠',
     href: '/product/tshirt-1',
