@@ -9,6 +9,7 @@ export interface ReservationRow {
   phone_last4: string
   items: ReservationItem[]
   product_ids: string[]
+  total_price: number
   created_at: string
 }
 
@@ -35,6 +36,7 @@ export async function saveReservation(reservation: Reservation) {
     password: reservation.password,
     items: reservation.items ?? [],
     product_ids: reservation.productIds,
+    total_price: reservation.totalPrice,
   })
 
   if (error) return { ok: false as const, message: error.message }
@@ -115,6 +117,7 @@ export async function updateReservationOnServer(
   credentials: ReservationCredentials,
   items: ReservationItem[],
   productIds: string[],
+  totalPrice: number,
 ) {
   const supabase = getSupabase()
   if (!supabase) return { ok: false as const, message: 'Supabase가 연결되어 있지 않아요.' }
@@ -125,6 +128,7 @@ export async function updateReservationOnServer(
     p_password: credentials.password,
     p_items: items,
     p_product_ids: productIds,
+    p_total_price: totalPrice,
   })
 
   if (error) return { ok: false as const, message: error.message }
@@ -149,7 +153,7 @@ export async function fetchAllReservations() {
 
   const { data, error } = await supabase
     .from('reservations')
-    .select('id, name, phone_last4, items, product_ids, created_at')
+    .select('id, name, phone_last4, items, product_ids, total_price, created_at')
     .order('created_at', { ascending: false })
 
   if (error) return { ok: false as const, message: error.message }

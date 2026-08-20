@@ -1856,6 +1856,78 @@ img.addon-row__media {
   color: #a33a3a;
 }
 
+/* ---------- 전체 금액 ---------- */
+.total-box {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--color-surface);
+}
+
+.total-box__lines {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 12.5px;
+  color: var(--color-sub);
+}
+
+.total-box__lines li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.total-box__sum {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-line);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.total-box__sum strong {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.total-box__note {
+  margin-top: 8px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--color-faint);
+  word-break: keep-all;
+}
+
+.reservation-card__total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-line);
+  font-size: 12.5px;
+  color: var(--color-sub);
+}
+
+.reservation-card__total strong {
+  font-size: 15px;
+  color: var(--color-ink);
+}
+
+.admin__card-total {
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .agree-row {
   display: flex;
   gap: 10px;

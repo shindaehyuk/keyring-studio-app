@@ -24,6 +24,7 @@ import {
   type ReservationRow,
 } from '../../lib/reservations'
 import { EDIT_HANDOFF_KEY } from '../../lib/reservationEdit'
+import { totalPriceOfItems } from '../../lib/price'
 import { isSupabaseConfigured } from '../../lib/supabase'
 import { ProductThumb } from '../../components/ProductThumb'
 
@@ -293,6 +294,32 @@ export function ReserveForm() {
 
   const selectedCount = Object.keys(singles).length + Object.keys(sets).length
 
+  /** 지금 담은 구성 — 금액 표시와 저장에 같은 값을 쓴다 */
+  const items = useMemo<ReservationItem[]>(
+    () => [
+      ...Object.entries(singles).map(([productId, size]) => ({ productId, size })),
+      ...Object.entries(sets).flatMap(([setId, picks]) =>
+        picks.map((pick) => ({ ...pick, viaSet: setId })),
+      ),
+      ...Array.from({ length: nametagQty }, () => ({ productId: NAMETAG_ID })),
+    ],
+    [singles, sets, nametagQty],
+  )
+
+  const totalPrice = totalPriceOfItems(items)
+
+  /** 금액 내역 — 세트는 구성품이 아니라 세트 값으로 한 줄 */
+  const priceLines = [
+    ...Object.keys(singles).map((id) => getProduct(id)).filter(Boolean),
+    ...Object.keys(sets).map((id) => getProduct(id)).filter(Boolean),
+  ].map((product) => ({ name: shortNameOf(product!), price: product!.price }))
+  if (nametagQty > 0 && NAMETAG) {
+    priceLines.push({
+      name: `${shortNameOf(NAMETAG)} × ${nametagQty}`,
+      price: NAMETAG.price * nametagQty,
+    })
+  }
+
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     if (submitting) return
@@ -329,14 +356,6 @@ export function ReserveForm() {
       }
     }
 
-    const items: ReservationItem[] = [
-      ...Object.entries(singles).map(([productId, size]) => ({ productId, size })),
-      ...Object.entries(sets).flatMap(([setId, picks]) =>
-        picks.map((pick) => ({ ...pick, viaSet: setId })),
-      ),
-      ...Array.from({ length: nametagQty }, () => ({ productId: NAMETAG_ID })),
-    ]
-
     const productIds = [
       ...Object.keys(singles),
       ...Object.keys(sets),
@@ -349,6 +368,7 @@ export function ReserveForm() {
         editing.credentials,
         items,
         productIds,
+        totalPrice,
       )
       setSubmitting(false)
       if (!updated.ok) {
@@ -367,6 +387,7 @@ export function ReserveForm() {
       password,
       productIds,
       items,
+      totalPrice,
     })
 
     const saved = await saveReservation(reservation)
@@ -708,6 +729,26 @@ export function ReserveForm() {
                 </button>
               </div>
             </div>
+          </section>
+        )}
+
+        {selectedCount > 0 && (
+          <section className="total-box">
+            <ul className="total-box__lines">
+              {priceLines.map((line) => (
+                <li key={line.name}>
+                  <span>{line.name}</span>
+                  <span>{formatPrice(line.price)}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="total-box__sum">
+              <span>전체 금액</span>
+              <strong>{formatPrice(totalPrice)}</strong>
+            </p>
+            <p className="total-box__note">
+              사전예약 단계에서는 결제하지 않아요. 금액은 수령하실 때 안내드립니다.
+            </p>
           </section>
         )}
 

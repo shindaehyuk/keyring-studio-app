@@ -32,6 +32,8 @@ export interface Reservation {
   productIds: string[]
   /** 사이즈까지 반영한 실제 구성. 예전 예약 기록에는 없을 수 있다 */
   items?: ReservationItem[]
+  /** 예약 시점에 안내한 총 금액 (원) */
+  totalPrice: number
   createdAt: string
 }
 

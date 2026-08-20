@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState, type FormEvent } from 'react'
 import { KeyringArt } from '../../art/KeyringArt'
-import { getProduct, shortNameOf } from '../../data/products'
+import { formatPrice, getProduct, shortNameOf } from '../../data/products'
 import {
   cancelReservationOnServer,
   findReservations,
@@ -170,6 +170,10 @@ export default function LookupPage() {
                         <li key={line}>{line}</li>
                       ))}
                     </ul>
+                    <p className="reservation-card__total">
+                      <span>전체 금액</span>
+                      <strong>{formatPrice(row.total_price ?? 0)}</strong>
+                    </p>
                     <div className="reservation-card__actions">
                       <button className="reservation-card__edit" onClick={() => startEdit(row)}>
                         예약 수정

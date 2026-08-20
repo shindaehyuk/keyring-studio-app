@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import {
+  formatPrice,
   getProduct,
   PRODUCTS,
   shortNameOf,
@@ -212,6 +213,7 @@ export function AdminView() {
   })
 
   const totalUnits = Array.from(totals.values()).reduce((sum, n) => sum + n, 0)
+  const totalAmount = (rows ?? []).reduce((sum, row) => sum + (row.total_price ?? 0), 0)
 
   return (
     <div className="page admin">
@@ -233,7 +235,8 @@ export function AdminView() {
       {error && <p className="admin__error">{error}</p>}
 
       <p className="admin__summary">
-        예약 <strong>{rows?.length ?? 0}건</strong> · 굿즈 <strong>{totalUnits}개</strong>
+        예약 <strong>{rows?.length ?? 0}건</strong> · 굿즈 <strong>{totalUnits}개</strong> · 금액{' '}
+        <strong>{formatPrice(totalAmount)}</strong>
       </p>
 
       <h2 className="admin__section">품목별 접수 수량</h2>
@@ -275,6 +278,7 @@ export function AdminView() {
               </strong>
               <span>{formatWhen(row.created_at)}</span>
             </div>
+            <p className="admin__card-total">{formatPrice(row.total_price ?? 0)}</p>
             <div className="admin__card-meta">
               <p className="admin__card-id">{row.id}</p>
               <button className="admin__delete" onClick={() => setConfirming(row)}>
