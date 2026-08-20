@@ -7,3 +7,8 @@ npm-debug.log*
 *.tsbuildinfo
 .next
 out
+
+# 환경변수 (.env.example 만 커밋한다)
+.env
+.env.local
+.env*.local

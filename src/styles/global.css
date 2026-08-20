@@ -1520,6 +1520,157 @@ img.addon-row__media {
   font-weight: 700;
 }
 
+/* ---------- 관리자 · 예약 관리 ---------- */
+.admin {
+  padding: 20px 20px 40px;
+}
+
+.admin__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin__title {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.admin__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.admin__button {
+  padding: 7px 11px;
+  border-radius: 9px;
+  border: 1.5px solid var(--color-line);
+  background: var(--color-bg);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.admin__button:disabled {
+  opacity: 0.45;
+}
+
+.admin__login {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.admin__error {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-accent);
+}
+
+.admin__empty {
+  margin-top: 24px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--color-sub);
+}
+
+.admin__summary {
+  margin-top: 14px;
+  font-size: 13.5px;
+  color: var(--color-sub);
+}
+
+.admin__summary strong {
+  color: var(--color-ink);
+}
+
+.admin__section {
+  margin: 26px 0 10px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.admin__table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+}
+
+.admin__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.admin__table th,
+.admin__table td {
+  padding: 8px 10px;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.admin__table th {
+  background: var(--color-surface);
+  font-weight: 700;
+}
+
+.admin__table tr:last-child td {
+  border-bottom: none;
+}
+
+.admin__table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin__table tr.out td {
+  color: var(--color-faint);
+}
+
+.admin__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.admin__card {
+  padding: 12px;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+}
+
+.admin__card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13.5px;
+}
+
+.admin__card-head span {
+  flex-shrink: 0;
+  font-size: 11.5px;
+  color: var(--color-sub);
+}
+
+.admin__card-id {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--color-faint);
+}
+
+.admin__card-items {
+  margin: 8px 0 0;
+  padding-left: 16px;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
 .agree-row {
   display: flex;
   gap: 10px;
