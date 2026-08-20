@@ -88,7 +88,8 @@ create policy "signed in admins can delete reservations"
 --    security_invoker 를 켜지 않으므로 뷰 소유자 권한으로 실행되어
 --    RLS 를 우회한다. 노출되는 값은 상품 id·사이즈·개수뿐이다.
 -- ---------------------------------------------------------------
-create or replace view public.reserved_counts as
+drop view if exists public.reserved_counts;
+create view public.reserved_counts as
   select
     item ->> 'productId'      as product_id,
     item ->> 'size'           as size,
@@ -101,7 +102,16 @@ grant select on public.reserved_counts to anon, authenticated;
 
 -- ---------------------------------------------------------------
 -- 5. 손님용 — 이름 · 휴대폰 뒷 4자리 · 비밀번호가 모두 맞아야 한다
+--
+--    create or replace 는 함수의 반환 타입을 바꾸지 못한다.
+--    이 파일을 다시 실행할 때 컬럼이 늘어난 경우에도 통과하도록
+--    만들기 전에 예전 함수를 먼저 지운다. (예전 시그니처도 함께)
 -- ---------------------------------------------------------------
+drop function if exists public.find_reservations(text, text, text);
+drop function if exists public.cancel_reservation(text, text);
+drop function if exists public.cancel_reservation(text, text, text);
+drop function if exists public.update_reservation(text, text, text, jsonb, text[]);
+drop function if exists public.update_reservation(text, text, text, jsonb, text[], integer);
 
 -- 예약 조회
 create or replace function public.find_reservations(
@@ -187,10 +197,6 @@ begin
   return changed > 0;
 end;
 $$;
-
--- 예전 시그니처가 남아 있으면 정리한다
-drop function if exists public.cancel_reservation(text, text);
-drop function if exists public.update_reservation(text, text, text, jsonb, text[]);
 
 revoke all on function public.find_reservations(text, text, text) from public;
 revoke all on function public.cancel_reservation(text, text, text) from public;
