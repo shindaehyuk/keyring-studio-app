@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { BackIcon, HeartIcon, ShareIcon } from '../../../art/Icons'
 import { Sparkle } from '../../../art/KeyringArt'
 import {
@@ -10,9 +11,14 @@ import {
   getProduct,
   shortNameOf,
   sizesOf,
+  stockFor,
+  stockKey,
   type Product,
+  type SizeId,
 } from '../../../data/products'
 import { assetPath } from '../../../lib/assetPath'
+import { fetchReservedCounts } from '../../../lib/reservations'
+import { isSupabaseConfigured } from '../../../lib/supabase'
 import { useAppStore } from '../../../store/AppStore'
 import { ProductThumb } from '../../../components/ProductThumb'
 
@@ -20,6 +26,28 @@ export function ProductDetail({ product }: { product: Product }) {
   const router = useRouter()
   const { wishlist, toggleWishlist, showToast } = useAppStore()
   const liked = wishlist.includes(product.id)
+
+  /**
+   * 이미 예약된 수량. 사전예약 화면과 같은 집계를 쓰므로
+   * 상세에서 본 남은 수량과 예약 화면의 수량이 어긋나지 않는다.
+   */
+  const [reserved, setReserved] = useState<Map<string, number> | null>(null)
+  const [loadingStock, setLoadingStock] = useState(isSupabaseConfigured)
+
+  useEffect(() => {
+    let alive = true
+    fetchReservedCounts().then((counts) => {
+      if (!alive) return
+      if (counts) setReserved(counts)
+      setLoadingStock(false)
+    })
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  const leftOf = (size?: SizeId) =>
+    Math.max(0, stockFor(product.id, size) - (reserved?.get(stockKey(product.id, size)) ?? 0))
 
   const share = async () => {
     const url = window.location.href
@@ -104,7 +132,9 @@ export function ProductDetail({ product }: { product: Product }) {
           {product.stock !== undefined && (
             <div className="option-row">
               <span className="option-row__label">남은 수량</span>
-              <span className="option-row__value">{product.stock}개</span>
+              <span className="option-row__value">
+                {loadingStock ? '확인 중…' : leftOf() === 0 ? '품절' : `${leftOf()}개`}
+              </span>
             </div>
           )}
         </div>
@@ -114,11 +144,16 @@ export function ProductDetail({ product }: { product: Product }) {
             <p className="option-title">사이즈별 남은 수량</p>
             <ul className="stock-grid">
               {sizesOf(product).map((size) => {
-                const left = product.sizeStock?.[size] ?? 0
+                const left = leftOf(size)
                 return (
-                  <li key={size} className={`stock-cell${left === 0 ? ' out' : ''}`}>
+                  <li
+                    key={size}
+                    className={`stock-cell${!loadingStock && left === 0 ? ' out' : ''}`}
+                  >
                     <span className="stock-cell__size">{size}</span>
-                    <span className="stock-cell__left">{left === 0 ? '품절' : `${left}개`}</span>
+                    <span className="stock-cell__left">
+                      {loadingStock ? '…' : left === 0 ? '품절' : `${left}개`}
+                    </span>
                   </li>
                 )
               })}

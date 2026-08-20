@@ -7,7 +7,15 @@ import '../styles/global.css'
 
 const base = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
 
+/** 카카오톡·SNS 미리보기는 절대 주소가 필요하다 */
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://juice-pre-order.vercel.app'
+
+const SHARE_TITLE = 'JUICE — 사자 키링 & 말씀 티셔츠 사전예약'
+const SHARE_DESC =
+  '집회 헌금마련을 위한 사자 키링 5종과 말씀 티셔츠 3종. 8/23 정식오픈 전까지 사전예약을 받아요!'
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
     default: 'JUICE — 아크릴 키링 사전예약',
     template: '%s | JUICE',
@@ -15,12 +23,26 @@ export const metadata: Metadata = {
   description:
     '나만의 이야기를 담은 아크릴 키링, JUICE. 귀여운 사자 키링을 미리 만나고 사전예약해보세요.',
   openGraph: {
-    title: 'JUICE — 아크릴 키링 사전예약',
-    description:
-      '귀여운 아크릴 키링 컬렉션이 곧 오픈해요. 사전예약하고 오픈 소식을 가장 먼저 받아보세요!',
+    title: SHARE_TITLE,
+    description: SHARE_DESC,
     type: 'website',
     locale: 'ko_KR',
     siteName: 'JUICE',
+    url: siteUrl,
+    images: [
+      {
+        url: `${base}/og-cover.jpg`,
+        width: 1200,
+        height: 630,
+        alt: 'JUICE — 사자 키링 & 말씀 티셔츠 사전예약',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: SHARE_TITLE,
+    description: SHARE_DESC,
+    images: [`${base}/og-cover.jpg`],
   },
   manifest: `${base}/manifest.webmanifest`,
   icons: {
