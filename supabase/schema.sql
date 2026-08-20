@@ -51,3 +51,33 @@ create or replace view public.reserved_counts as
   group by 1, 2;
 
 grant select on public.reserved_counts to anon, authenticated;
+
+-- ---------------------------------------------------------------
+-- 4. 예약 취소
+--    예약 번호만으로 지울 수 있으면 남의 예약도 지울 수 있으므로,
+--    번호 + 휴대폰 뒷 4자리가 모두 맞을 때만 지운다.
+--    (security definer 라 RLS 를 통과하지만, 조건은 이 함수가 검사한다)
+-- ---------------------------------------------------------------
+create or replace function public.cancel_reservation(
+  p_id          text,
+  p_phone_last4 text
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  removed int;
+begin
+  delete from public.reservations
+   where id = p_id
+     and phone_last4 = p_phone_last4;
+
+  get diagnostics removed = row_count;
+  return removed > 0;
+end;
+$$;
+
+revoke all on function public.cancel_reservation(text, text) from public;
+grant execute on function public.cancel_reservation(text, text) to anon, authenticated;

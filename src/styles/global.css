@@ -1562,6 +1562,8 @@ img.addon-row__media {
 }
 
 .admin__button {
+  display: inline-flex;
+  align-items: center;
   padding: 7px 11px;
   border-radius: 9px;
   border: 1.5px solid var(--color-line);

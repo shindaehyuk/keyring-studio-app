@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import {
   getProduct,
@@ -108,7 +109,12 @@ export function AdminView() {
   if (!isSupabaseConfigured) {
     return (
       <div className="page admin">
-        <h1 className="admin__title">예약 관리</h1>
+        <div className="admin__head">
+          <h1 className="admin__title">예약 관리</h1>
+          <Link className="admin__button" href="/">
+            사이트로
+          </Link>
+        </div>
         <p className="admin__empty">
           Supabase가 연결되어 있지 않아요.
           <br />
@@ -137,7 +143,12 @@ export function AdminView() {
   if (!signedIn) {
     return (
       <div className="page admin">
-        <h1 className="admin__title">예약 관리</h1>
+        <div className="admin__head">
+          <h1 className="admin__title">예약 관리</h1>
+          <Link className="admin__button" href="/">
+            사이트로
+          </Link>
+        </div>
         <form className="admin__login" onSubmit={signIn}>
           <label className="field">
             <span className="field__label">이메일</span>
@@ -186,6 +197,9 @@ export function AdminView() {
       <div className="admin__head">
         <h1 className="admin__title">예약 관리</h1>
         <div className="admin__actions">
+          <Link className="admin__button" href="/">
+            사이트로
+          </Link>
           <button className="admin__button" onClick={() => void load()} disabled={busy}>
             새로고침
           </button>

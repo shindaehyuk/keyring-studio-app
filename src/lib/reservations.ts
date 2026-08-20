@@ -61,6 +61,26 @@ export async function fetchReservedCounts() {
   return counts
 }
 
+/**
+ * 예약을 서버에서 지운다.
+ * 예약 번호와 휴대폰 뒷 4자리가 모두 맞아야 지워진다(서버 함수가 검사).
+ * 설정이 없으면 지울 서버 기록도 없으므로 성공으로 본다.
+ */
+export async function cancelReservationOnServer(id: string, phoneLast4: string) {
+  const supabase = getSupabase()
+  if (!supabase) return { ok: true as const }
+
+  const { data, error } = await supabase.rpc('cancel_reservation', {
+    p_id: id,
+    p_phone_last4: phoneLast4,
+  })
+
+  if (error) return { ok: false as const, message: error.message }
+  // 이미 지워졌거나 예전(서버에 없는) 예약이면 false 가 온다 — 취소로 봐도 된다
+  if (data === false) return { ok: true as const, alreadyGone: true }
+  return { ok: true as const }
+}
+
 /** 관리자용 — 로그인한 세션으로만 읽을 수 있다 (RLS) */
 export async function fetchAllReservations() {
   const supabase = getSupabase()
