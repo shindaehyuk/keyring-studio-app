@@ -1,88 +1,226 @@
 'use client'
 
-import Link from 'next/link'
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useState, type FormEvent } from 'react'
 import { KeyringArt } from '../../art/KeyringArt'
-import { getProduct } from '../../data/products'
-import { summarizeReservation } from '../../lib/reservationSummary'
-import { cancelReservationOnServer } from '../../lib/reservations'
+import { getProduct, shortNameOf } from '../../data/products'
+import {
+  cancelReservationOnServer,
+  findReservations,
+  type ReservationCredentials,
+  type ReservationRow,
+} from '../../lib/reservations'
+import { EDIT_HANDOFF_KEY } from '../../lib/reservationEdit'
+import { isSupabaseConfigured } from '../../lib/supabase'
 import { useAppStore } from '../../store/AppStore'
-import { ProductThumb } from '../../components/ProductThumb'
 
-export default function MyReservationsPage() {
-  const { reservations, cancelReservation, showToast } = useAppStore()
-  const [cancelling, setCancelling] = useState<string | null>(null)
+const formatWhen = (iso: string) =>
+  new Date(iso).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })
 
-  /**
-   * 서버에서 먼저 지우고, 성공했을 때만 화면에서 뺀다.
-   * 여기서 지워야 남은 수량이 다시 늘고 관리자 목록에서도 사라진다.
-   */
-  const cancel = async (id: string, phoneLast4: string) => {
-    if (cancelling) return
-    setCancelling(id)
-    const result = await cancelReservationOnServer(id, phoneLast4)
-    setCancelling(null)
+/** 예약 한 건의 구성을 읽기 좋은 줄로 */
+function describe(row: ReservationRow) {
+  const counts = new Map<string, number>()
+  for (const item of row.items ?? []) {
+    const product = getProduct(item.productId)
+    const name = product ? shortNameOf(product) : item.productId
+    const set = item.viaSet ? getProduct(item.viaSet) : undefined
+    const prefix = set ? `[${shortNameOf(set)}] ` : ''
+    const label = `${prefix}${name}${item.size ? ` (${item.size})` : ''}`
+    counts.set(label, (counts.get(label) ?? 0) + 1)
+  }
+  return Array.from(counts, ([label, count]) => (count > 1 ? `${label} × ${count}` : label))
+}
+
+const onlyDigits = (value: string, max = 4) => value.replace(/\D/g, '').slice(-max)
+
+export default function LookupPage() {
+  const router = useRouter()
+  const { showToast } = useAppStore()
+
+  const [name, setName] = useState('')
+  const [phoneLast4, setPhoneLast4] = useState('')
+  const [password, setPassword] = useState('')
+
+  const [searching, setSearching] = useState(false)
+  const [rows, setRows] = useState<ReservationRow[] | null>(null)
+  const [credentials, setCredentials] = useState<ReservationCredentials | null>(null)
+  /** 취소 확인 모달에 올라온 예약 */
+  const [confirming, setConfirming] = useState<ReservationRow | null>(null)
+  const [cancelling, setCancelling] = useState(false)
+
+  const search = async (e: FormEvent) => {
+    e.preventDefault()
+    if (searching) return
+    if (!name.trim()) return showToast('이름을 입력해주세요!')
+    if (!/^\d{4}$/.test(phoneLast4)) return showToast('휴대폰 뒷 4자리를 입력해주세요!')
+    if (!/^\d{4}$/.test(password)) return showToast('비밀번호 4자리를 입력해주세요!')
+
+    const next: ReservationCredentials = { name: name.trim(), phoneLast4, password }
+    setSearching(true)
+    const result = await findReservations(next)
+    setSearching(false)
+
+    if (!result.ok) {
+      showToast('조회하지 못했어요. 잠시 후 다시 시도해주세요.')
+      return
+    }
+    setCredentials(next)
+    setRows(result.rows)
+  }
+
+  const confirmCancel = async () => {
+    if (!confirming || !credentials || cancelling) return
+    setCancelling(true)
+    const result = await cancelReservationOnServer(confirming.id, credentials)
+    setCancelling(false)
 
     if (!result.ok) {
       showToast('예약을 취소하지 못했어요. 잠시 후 다시 시도해주세요.')
       return
     }
-    cancelReservation(id)
+    setRows((prev) => (prev ?? []).filter((row) => row.id !== confirming.id))
+    setConfirming(null)
     showToast('예약을 취소했어요.')
+  }
+
+  const startEdit = (row: ReservationRow) => {
+    if (!credentials) return
+    sessionStorage.setItem(EDIT_HANDOFF_KEY, JSON.stringify({ row, credentials }))
+    router.push('/reserve')
   }
 
   return (
     <div className="page">
       <header className="page-header">
-        <h1 className="page-header__title">내 예약</h1>
+        <h1 className="page-header__title">예약 확인</h1>
       </header>
 
-      {reservations.length === 0 ? (
-        <div className="empty-state">
-          <KeyringArt art="star" />
-          <p>
-            아직 사전예약 내역이 없어요.
-            <br />
-            지금 예약하고 오픈 소식을 가장 먼저 받아보세요!
-          </p>
-          <Link href="/reserve" className="hero__cta" style={{ marginTop: 4 }}>
-            사전예약하러 가기
-          </Link>
-        </div>
+      {!isSupabaseConfigured ? (
+        <p className="lookup__note">지금은 예약 조회를 쓸 수 없어요. 담당자에게 문의해주세요.</p>
       ) : (
-        <ul className="reservation-list">
-          {reservations.map((reservation) => (
-            <li key={reservation.id} className="reservation-card">
-              <div className="reservation-card__head">
-                <strong>{reservation.id}</strong>
-                <span>{new Date(reservation.createdAt).toLocaleDateString('ko-KR')}</span>
+        <>
+          <form className="lookup" onSubmit={search}>
+            <p className="lookup__intro">
+              예약하실 때 입력한 이름 · 휴대폰 뒷 4자리 · 비밀번호를 모두 입력해주세요.
+            </p>
+
+            <label className="field">
+              <span className="field__label">이름</span>
+              <input
+                className="field__input"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="예약하신 이름"
+                maxLength={20}
+              />
+            </label>
+
+            <label className="field">
+              <span className="field__label">휴대폰 뒷 4자리</span>
+              <input
+                className="field__input"
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                value={phoneLast4}
+                onChange={(e) => setPhoneLast4(onlyDigits(e.target.value))}
+                placeholder="예) 1234"
+              />
+            </label>
+
+            <label className="field">
+              <span className="field__label">예약 비밀번호 4자리</span>
+              <input
+                className="field__input"
+                type="password"
+                inputMode="numeric"
+                autoComplete="off"
+                value={password}
+                onChange={(e) => setPassword(onlyDigits(e.target.value))}
+                placeholder="숫자 4자리"
+              />
+            </label>
+
+            <button type="submit" className="button-primary" disabled={searching}>
+              {searching ? '조회하는 중…' : '예약 조회하기'}
+            </button>
+          </form>
+
+          {rows !== null &&
+            (rows.length === 0 ? (
+              <div className="empty-state">
+                <KeyringArt art="star" />
+                <p>
+                  예약 내역이 없습니다.
+                  <br />
+                  입력하신 내용을 다시 확인해주세요.
+                </p>
               </div>
-              <div className="reservation-card__thumbs">
-                {reservation.productIds.map((id) => {
-                  const product = getProduct(id)
-                  if (!product) return null
-                  return (
-                    <span key={id} className="reservation-card__thumb" title={product.name}>
-                      <ProductThumb product={product} className="reservation-card__media" />
-                    </span>
-                  )
-                })}
-              </div>
-              <ul className="reservation-card__names">
-                {summarizeReservation(reservation).map((line) => (
-                  <li key={line}>{line}</li>
+            ) : (
+              <ul className="reservation-list">
+                {rows.map((row) => (
+                  <li key={row.id} className="reservation-card">
+                    <div className="reservation-card__head">
+                      <strong>{row.id}</strong>
+                      <span>{formatWhen(row.created_at)}</span>
+                    </div>
+                    <ul className="reservation-card__names">
+                      {describe(row).map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ul>
+                    <div className="reservation-card__actions">
+                      <button className="reservation-card__edit" onClick={() => startEdit(row)}>
+                        예약 수정
+                      </button>
+                      <button
+                        className="reservation-card__cancel"
+                        onClick={() => setConfirming(row)}
+                      >
+                        예약 취소
+                      </button>
+                    </div>
+                  </li>
                 ))}
               </ul>
+            ))}
+        </>
+      )}
+
+      {confirming && (
+        <div
+          className="modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="예약 취소 확인"
+          onClick={() => !cancelling && setConfirming(null)}
+        >
+          <div className="modal__panel" onClick={(e) => e.stopPropagation()}>
+            <p className="modal__title">정말 예약을 취소하겠습니까?</p>
+            <p className="modal__desc">
+              취소하면 되돌릴 수 없어요.
+              <br />
+              같은 굿즈를 다시 담으려면 처음부터 신청해야 합니다.
+            </p>
+            <div className="modal__actions">
               <button
-                className="reservation-card__cancel"
-                disabled={cancelling === reservation.id}
-                onClick={() => void cancel(reservation.id, reservation.phoneLast4)}
+                className="modal__button"
+                disabled={cancelling}
+                onClick={() => setConfirming(null)}
               >
-                {cancelling === reservation.id ? '취소하는 중…' : '예약 취소'}
+                돌아가기
               </button>
-            </li>
-          ))}
-        </ul>
+              <button
+                className="modal__button modal__button--danger"
+                disabled={cancelling}
+                onClick={() => void confirmCancel()}
+              >
+                {cancelling ? '취소하는 중…' : '예약 취소'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

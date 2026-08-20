@@ -32,6 +32,7 @@ export async function saveReservation(reservation: Reservation) {
     id: reservation.id,
     name: reservation.name,
     phone_last4: reservation.phoneLast4,
+    password: reservation.password,
     items: reservation.items ?? [],
     product_ids: reservation.productIds,
   })
@@ -61,23 +62,83 @@ export async function fetchReservedCounts() {
   return counts
 }
 
-/**
- * 예약을 서버에서 지운다.
- * 예약 번호와 휴대폰 뒷 4자리가 모두 맞아야 지워진다(서버 함수가 검사).
- * 설정이 없으면 지울 서버 기록도 없으므로 성공으로 본다.
- */
-export async function cancelReservationOnServer(id: string, phoneLast4: string) {
-  const supabase = getSupabase()
-  if (!supabase) return { ok: true as const }
+/** 예약 확인·취소·수정에 함께 보내는 본인 확인 값 */
+export interface ReservationCredentials {
+  name: string
+  phoneLast4: string
+  password: string
+}
 
-  const { data, error } = await supabase.rpc('cancel_reservation', {
-    p_id: id,
-    p_phone_last4: phoneLast4,
+/**
+ * 이름·휴대폰 뒷 4자리·비밀번호가 모두 맞는 예약을 가져온다.
+ * 하나라도 틀리면 빈 배열이 온다(어느 항목이 틀렸는지는 알려주지 않는다).
+ */
+export async function findReservations(credentials: ReservationCredentials) {
+  const supabase = getSupabase()
+  if (!supabase) return { ok: false as const, message: 'Supabase가 연결되어 있지 않아요.' }
+
+  const { data, error } = await supabase.rpc('find_reservations', {
+    p_name: credentials.name,
+    p_phone_last4: credentials.phoneLast4,
+    p_password: credentials.password,
   })
 
   if (error) return { ok: false as const, message: error.message }
-  // 이미 지워졌거나 예전(서버에 없는) 예약이면 false 가 온다 — 취소로 봐도 된다
-  if (data === false) return { ok: true as const, alreadyGone: true }
+  return { ok: true as const, rows: (data ?? []) as ReservationRow[] }
+}
+
+/**
+ * 예약을 서버에서 지운다.
+ * 예약 번호·휴대폰 뒷 4자리·비밀번호가 모두 맞아야 지워진다(서버 함수가 검사).
+ */
+export async function cancelReservationOnServer(
+  id: string,
+  credentials: ReservationCredentials,
+) {
+  const supabase = getSupabase()
+  if (!supabase) return { ok: false as const, message: 'Supabase가 연결되어 있지 않아요.' }
+
+  const { data, error } = await supabase.rpc('cancel_reservation', {
+    p_id: id,
+    p_phone_last4: credentials.phoneLast4,
+    p_password: credentials.password,
+  })
+
+  if (error) return { ok: false as const, message: error.message }
+  if (data === false) return { ok: false as const, message: '예약을 찾지 못했어요.' }
+  return { ok: true as const }
+}
+
+/** 고른 구성만 바꾼다. 본인 확인 값이 맞아야 한다 */
+export async function updateReservationOnServer(
+  id: string,
+  credentials: ReservationCredentials,
+  items: ReservationItem[],
+  productIds: string[],
+) {
+  const supabase = getSupabase()
+  if (!supabase) return { ok: false as const, message: 'Supabase가 연결되어 있지 않아요.' }
+
+  const { data, error } = await supabase.rpc('update_reservation', {
+    p_id: id,
+    p_phone_last4: credentials.phoneLast4,
+    p_password: credentials.password,
+    p_items: items,
+    p_product_ids: productIds,
+  })
+
+  if (error) return { ok: false as const, message: error.message }
+  if (data === false) return { ok: false as const, message: '예약을 찾지 못했어요.' }
+  return { ok: true as const }
+}
+
+/** 관리자용 삭제 — 로그인한 세션만 가능하다 (RLS) */
+export async function deleteReservationAsAdmin(id: string) {
+  const supabase = getSupabase()
+  if (!supabase) return { ok: false as const, message: 'Supabase가 연결되어 있지 않아요.' }
+
+  const { error } = await supabase.from('reservations').delete().eq('id', id)
+  if (error) return { ok: false as const, message: error.message }
   return { ok: true as const }
 }
 

@@ -11,7 +11,11 @@ import {
   stockKey,
   type SizeId,
 } from '../../data/products'
-import { fetchAllReservations, type ReservationRow } from '../../lib/reservations'
+import {
+  deleteReservationAsAdmin,
+  fetchAllReservations,
+  type ReservationRow,
+} from '../../lib/reservations'
 import { getSupabase, isSupabaseConfigured } from '../../lib/supabase'
 
 const formatWhen = (iso: string) =>
@@ -42,6 +46,9 @@ export function AdminView() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [rows, setRows] = useState<ReservationRow[] | null>(null)
+  /** 삭제 확인 모달에 올라온 예약 */
+  const [confirming, setConfirming] = useState<ReservationRow | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const load = useCallback(async () => {
     setBusy(true)
@@ -92,6 +99,20 @@ export function AdminView() {
     setSignedIn(false)
     setRows(null)
     setPassword('')
+  }
+
+  const remove = async () => {
+    if (!confirming || deleting) return
+    setDeleting(true)
+    const result = await deleteReservationAsAdmin(confirming.id)
+    setDeleting(false)
+
+    if (!result.ok) {
+      setError(result.message)
+      return
+    }
+    setRows((prev) => (prev ?? []).filter((row) => row.id !== confirming.id))
+    setConfirming(null)
   }
 
   /** 상품·사이즈 단위로 몇 개가 접수됐는지 */
@@ -254,7 +275,12 @@ export function AdminView() {
               </strong>
               <span>{formatWhen(row.created_at)}</span>
             </div>
-            <p className="admin__card-id">{row.id}</p>
+            <div className="admin__card-meta">
+              <p className="admin__card-id">{row.id}</p>
+              <button className="admin__delete" onClick={() => setConfirming(row)}>
+                삭제
+              </button>
+            </div>
             <ul className="admin__card-items">
               {describeItems(row).map((line) => (
                 <li key={line}>{line}</li>
@@ -263,6 +289,44 @@ export function AdminView() {
           </li>
         ))}
       </ul>
+
+      {confirming && (
+        <div
+          className="modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="예약 삭제 확인"
+          onClick={() => !deleting && setConfirming(null)}
+        >
+          <div className="modal__panel" onClick={(e) => e.stopPropagation()}>
+            <p className="modal__title">이 예약을 삭제할까요?</p>
+            <p className="modal__desc">
+              {confirming.name} · {confirming.phone_last4}
+              <br />
+              {confirming.id}
+              <br />
+              <br />
+              삭제하면 되돌릴 수 없고, 그만큼 남은 수량이 다시 늘어납니다.
+            </p>
+            <div className="modal__actions">
+              <button
+                className="modal__button"
+                disabled={deleting}
+                onClick={() => setConfirming(null)}
+              >
+                돌아가기
+              </button>
+              <button
+                className="modal__button modal__button--danger"
+                disabled={deleting}
+                onClick={() => void remove()}
+              >
+                {deleting ? '삭제하는 중…' : '삭제'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
