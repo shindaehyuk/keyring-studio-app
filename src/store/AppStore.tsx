@@ -48,6 +48,21 @@ interface AppStore {
 
 const StoreContext = createContext<AppStore | null>(null)
 
+/** 헷갈리기 쉬운 글자(I·O·0·1)를 뺀 예약 번호용 문자 */
+const ID_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+
+/**
+ * 예약 번호 뒤에 붙는 무작위 세 글자.
+ * 시각만으로 만들면 같은 밀리초에 접수한 두 사람의 번호가 겹쳐
+ * 뒤에 들어온 예약이 저장되지 않는다(번호가 기본키라 충돌).
+ */
+function randomTail(length = 3) {
+  const random = globalThis.crypto?.getRandomValues?.(new Uint8Array(length))
+  return Array.from({ length }, (_, i) =>
+    ID_CHARS[(random ? random[i] : Math.floor(Math.random() * 256)) % ID_CHARS.length],
+  ).join('')
+}
+
 /**
  * 예약 번호와 접수 시각을 붙여 완성된 예약을 만든다.
  * 저장(서버)과 화면 반영(로컬)이 같은 값을 쓰도록 만드는 쪽을 분리해 뒀다.
@@ -57,7 +72,7 @@ export function buildReservation(
 ): Reservation {
   return {
     ...input,
-    id: `KS-${Date.now().toString(36).toUpperCase()}`,
+    id: `KS-${Date.now().toString(36).toUpperCase()}-${randomTail()}`,
     createdAt: new Date().toISOString(),
   }
 }

@@ -12,6 +12,8 @@ import {
 } from '../../lib/reservations'
 import { EDIT_HANDOFF_KEY } from '../../lib/reservationEdit'
 import { ButtonSpinner, LoadingOverlay } from '../../components/Loading'
+import { usePreorderOpen } from '../../lib/usePreorderOpen'
+import { ContactButton } from '../../components/ContactButton'
 import { isSupabaseConfigured } from '../../lib/supabase'
 import { useAppStore } from '../../store/AppStore'
 
@@ -37,6 +39,8 @@ const onlyDigits = (value: string, max = 4) => value.replace(/\D/g, '').slice(-m
 export default function LookupPage() {
   const router = useRouter()
   const { showToast } = useAppStore()
+  // 마감된 뒤에는 구성을 바꿀 수 없다 (조회·취소는 그대로 열어둔다)
+  const canEdit = usePreorderOpen() === true
 
   const [name, setName] = useState('')
   const [phoneLast4, setPhoneLast4] = useState('')
@@ -100,7 +104,10 @@ export default function LookupPage() {
       </header>
 
       {!isSupabaseConfigured ? (
-        <p className="lookup__note">지금은 예약 조회를 쓸 수 없어요. 담당자에게 문의해주세요.</p>
+        <div className="empty-state">
+          <p>지금은 예약 조회를 쓸 수 없어요.</p>
+          <ContactButton variant="quiet" label="담당자에게 문의하기" />
+        </div>
       ) : (
         <>
           <form className="lookup" onSubmit={search}>
@@ -161,6 +168,7 @@ export default function LookupPage() {
                   <br />
                   입력하신 내용을 다시 확인해주세요.
                 </p>
+                <ContactButton variant="quiet" label="예약이 안 보여요, 문의하기" />
               </div>
             ) : (
               <ul className="reservation-list">
@@ -180,13 +188,15 @@ export default function LookupPage() {
                       <strong>{formatPrice(row.total_price ?? 0)}</strong>
                     </p>
                     <div className="reservation-card__actions">
-                      <button
-                        className="reservation-card__edit"
-                        disabled={movingToEdit}
-                        onClick={() => startEdit(row)}
-                      >
-                        예약 수정
-                      </button>
+                      {canEdit && (
+                        <button
+                          className="reservation-card__edit"
+                          disabled={movingToEdit}
+                          onClick={() => startEdit(row)}
+                        >
+                          예약 수정
+                        </button>
+                      )}
                       <button
                         className="reservation-card__cancel"
                         onClick={() => setConfirming(row)}
@@ -198,6 +208,13 @@ export default function LookupPage() {
                 ))}
               </ul>
             ))}
+
+          {rows === null && (
+            <div className="contact-block">
+              <p className="contact-block__label">예약에 문제가 있으신가요?</p>
+              <ContactButton variant="quiet" label="카카오톡으로 문의하기" />
+            </div>
+          )}
         </>
       )}
 

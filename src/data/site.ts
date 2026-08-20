@@ -1,6 +1,16 @@
 /** 정식 오픈(사전예약 마감) 시각 */
 export const LAUNCH_DATE = '2026-08-23T09:30:00+09:00'
 
+/** 사전예약 마감 시각을 사람이 읽는 문구로 */
+export const LAUNCH_LABEL = '8월 23일 오전 9시 30분'
+
+/** 지금이 사전예약을 받는 시간인지 (마감 시각 이후면 false) */
+export const isPreorderOpen = () => Date.now() < new Date(LAUNCH_DATE).getTime()
+
+/** 문의를 받는 카카오톡 오픈채팅방 */
+export const CONTACT_KAKAO_URL = 'https://open.kakao.com/o/snFXgOJi'
+export const CONTACT_EMAIL = 'suwonjuice2026@gmail.com'
+
 /** 굿즈를 만든 이유 — 랜딩과 예약 완료 화면에서 함께 쓴다 */
 export type PurposeIconId = 'pencil' | 'offering' | 'people'
 

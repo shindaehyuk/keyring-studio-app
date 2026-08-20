@@ -1,8 +1,10 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { BackIcon } from '../../art/Icons'
+import { KeyringArt } from '../../art/KeyringArt'
 import {
   formatPrice,
   getProduct,
@@ -25,9 +27,12 @@ import {
 } from '../../lib/reservations'
 import { EDIT_HANDOFF_KEY } from '../../lib/reservationEdit'
 import { totalPriceOfItems } from '../../lib/price'
+import { usePreorderOpen } from '../../lib/usePreorderOpen'
+import { isPreorderOpen, LAUNCH_LABEL } from '../../data/site'
 import { isSupabaseConfigured } from '../../lib/supabase'
 import { ProductThumb } from '../../components/ProductThumb'
 import { ButtonSpinner, InlineLoading, LoadingOverlay } from '../../components/Loading'
+import { ContactButton } from '../../components/ContactButton'
 
 /** 낱개 하나를 고른 결과 */
 interface Pick {
@@ -42,9 +47,16 @@ const NAMETAG = getProduct(NAMETAG_ID)
 
 const samePick = (a: Pick, b: Pick) => a.productId === b.productId && a.size === b.size
 
+/** 단품 한 칸을 되돌린다 — 'tshirt-1:L' 같은 키에서 상품과 사이즈로 */
+const splitKey = (key: string) => {
+  const [productId, size] = key.split(':')
+  return { productId, size: size as SizeId | undefined }
+}
+
 /** 저장돼 있던 구성을 폼 상태로 되돌린다 */
 function splitItems(items: ReservationItem[]) {
-  const singles: Record<string, SizeId | undefined> = {}
+  // 단품은 '상품(:사이즈)' 별 개수로 센다
+  const singles: Record<string, number> = {}
   const sets: Record<string, Pick[]> = {}
   let nametag = 0
 
@@ -57,7 +69,8 @@ function splitItems(items: ReservationItem[]) {
     } else if (item.productId === NAMETAG_ID) {
       nametag += 1
     } else {
-      singles[item.productId] = item.size
+      const key = stockKey(item.productId, item.size)
+      singles[key] = (singles[key] ?? 0) + 1
     }
   }
   return { singles, sets, nametag }
@@ -67,6 +80,7 @@ export function ReserveForm() {
   const preselectedId = useSearchParams().get('p') ?? undefined
   const router = useRouter()
   const { addReservation, showToast } = useAppStore()
+  const preorderOpen = usePreorderOpen()
   const [name, setName] = useState('')
   const [phoneLast4, setPhoneLast4] = useState('')
   const [password, setPassword] = useState('')
@@ -156,11 +170,11 @@ export function ReserveForm() {
   const preselected = preselectedId ? getProduct(preselectedId) : undefined
   const prefill = editing ? splitItems(editing.row.items ?? []) : null
 
-  // 단품 — 사이즈가 없는 상품은 값이 undefined인 채로 키만 들어간다
-  const [singles, setSingles] = useState<Record<string, SizeId | undefined>>(() => {
+  // 단품 — '상품(:사이즈)' 별로 몇 개를 담았는지
+  const [singles, setSingles] = useState<Record<string, number>>(() => {
     if (prefill) return prefill.singles
     return preselected && preselected.category === 'keyring' && !preselected.addOnOnly
-      ? { [preselected.id]: undefined }
+      ? { [preselected.id]: 1 }
       : {}
   })
   // 명찰 키링으로 담고 싶은 개수. 실제로 반영되는 값은 아래에서 상한에 맞춰 깎는다
@@ -191,7 +205,10 @@ export function ReserveForm() {
   /** 담은 티셔츠 장수 — 명찰 키링은 티셔츠 1장당 1개까지 */
   const tshirtCount = useMemo(() => {
     const isTshirt = (id: string) => getProduct(id)?.category === 'tshirt'
-    const fromSingles = Object.keys(singles).filter(isTshirt).length
+    const fromSingles = Object.entries(singles).reduce(
+      (sum, [key, qty]) => (isTshirt(splitKey(key).productId) ? sum + qty : sum),
+      0,
+    )
     const fromSets = Object.values(sets)
       .flat()
       .filter((pick) => isTshirt(pick.productId)).length
@@ -218,7 +235,7 @@ export function ReserveForm() {
       const key = stockKey(productId, size)
       counts.set(key, (counts.get(key) ?? 0) + count)
     }
-    for (const [productId, size] of Object.entries(singles)) add(productId, size)
+    for (const [key, qty] of Object.entries(singles)) counts.set(key, (counts.get(key) ?? 0) + qty)
     for (const picks of Object.values(sets)) for (const pick of picks) add(pick.productId, pick.size)
     if (nametagQty > 0) add(NAMETAG_ID, undefined, nametagQty)
     return counts
@@ -233,29 +250,46 @@ export function ReserveForm() {
     return stockFor(productId, size) - takenOf(key) - usedOf(productId, size)
   }
 
+  /**
+   * 화면에 보여줄 남은 수량.
+   * 담아둔 사이에 남이 먼저 가져가면 계산값이 음수가 될 수 있는데,
+   * '남은 -1개'는 말이 되지 않으므로 0으로 눌러서 보여준다.
+   */
+  const shownLeftOf = (productId: string, size?: SizeId) =>
+    Math.max(0, leftOf(productId, size))
+
   // ---- 단품 ----
-  const toggleKeyring = (product: Product) => {
+  /** 담은 개수 */
+  const qtyOf = (productId: string, size?: SizeId) => singles[stockKey(productId, size)] ?? 0
+
+  /** 개수를 바꾼다. 0이면 목록에서 뺀다 */
+  const setQty = (productId: string, size: SizeId | undefined, next: number) => {
+    const key = stockKey(productId, size)
     setSingles((prev) => {
-      const next = { ...prev }
-      if (product.id in next) delete next[product.id]
-      else if (leftOf(product.id) <= 0) {
-        showToast(`${shortNameOf(product)}는 남은 수량이 없어요.`)
-        return prev
-      } else next[product.id] = undefined
-      return next
+      const copy = { ...prev }
+      if (next <= 0) delete copy[key]
+      else copy[key] = next
+      return copy
     })
   }
 
-  const pickSingleSize = (product: Product, size: SizeId) => {
-    setSingles((prev) => {
-      const next = { ...prev }
-      if (next[product.id] === size) delete next[product.id]
-      else if (leftOf(product.id, size) <= 0) {
-        showToast(`${shortNameOf(product)} ${size} 사이즈는 남은 수량이 없어요.`)
-        return prev
-      } else next[product.id] = size
-      return next
-    })
+  /** 한 개 더 담는다. 남은 수량을 넘기면 안내만 하고 그대로 둔다 */
+  const addOne = (product: Product, size?: SizeId) => {
+    if (leftOf(product.id, size) <= 0) {
+      showToast(
+        size
+          ? `${shortNameOf(product)} ${size} 사이즈는 남은 수량이 없어요.`
+          : `${shortNameOf(product)}는 남은 수량이 없어요.`,
+      )
+      return
+    }
+    setQty(product.id, size, qtyOf(product.id, size) + 1)
+  }
+
+  /** 카드·사이즈 칩을 누르면 담기/빼기. 개수는 아래 조절기로 바꾼다 */
+  const toggleSingle = (product: Product, size?: SizeId) => {
+    if (qtyOf(product.id, size) > 0) setQty(product.id, size, 0)
+    else addOne(product, size)
   }
 
   // ---- 세트 ----
@@ -302,7 +336,10 @@ export function ReserveForm() {
   /** 지금 담은 구성 — 금액 표시와 저장에 같은 값을 쓴다 */
   const items = useMemo<ReservationItem[]>(
     () => [
-      ...Object.entries(singles).map(([productId, size]) => ({ productId, size })),
+      ...Object.entries(singles).flatMap(([key, qty]) => {
+        const { productId, size } = splitKey(key)
+        return Array.from({ length: qty }, () => ({ productId, size }))
+      }),
       ...Object.entries(sets).flatMap(([setId, picks]) =>
         picks.map((pick) => ({ ...pick, viaSet: setId })),
       ),
@@ -314,13 +351,23 @@ export function ReserveForm() {
   const totalPrice = totalPriceOfItems(items)
 
   /** 금액 내역 — 세트는 구성품이 아니라 세트 값으로 한 줄 */
-  const priceLines = [
-    ...Object.keys(singles).map((id) => getProduct(id)).filter(Boolean),
-    ...Object.keys(sets).map((id) => getProduct(id)).filter(Boolean),
-  ].map((product) => ({ name: shortNameOf(product!), price: product!.price }))
+  const priceLines: { name: string; price: number }[] = []
+  for (const [key, qty] of Object.entries(singles)) {
+    const { productId, size } = splitKey(key)
+    const product = getProduct(productId)
+    if (!product) continue
+    priceLines.push({
+      name: `${shortNameOf(product)}${size ? ` (${size})` : ''}${qty > 1 ? ` × ${qty}` : ''}`,
+      price: product.price * qty,
+    })
+  }
+  for (const setId of Object.keys(sets)) {
+    const set = getProduct(setId)
+    if (set) priceLines.push({ name: shortNameOf(set), price: set.price })
+  }
   if (nametagQty > 0 && NAMETAG) {
     priceLines.push({
-      name: `${shortNameOf(NAMETAG)} × ${nametagQty}`,
+      name: `${shortNameOf(NAMETAG)}${nametagQty > 1 ? ` × ${nametagQty}` : ''}`,
       price: NAMETAG.price * nametagQty,
     })
   }
@@ -328,6 +375,8 @@ export function ReserveForm() {
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     if (submitting) return
+    // 보고 있는 사이에 마감 시각이 지난 경우
+    if (!isPreorderOpen()) return showToast('사전예약이 마감됐어요.')
     if (!editing) {
       if (!name.trim()) return showToast('이름을 입력해주세요!')
       if (!/^\d{4}$/.test(phoneLast4)) return showToast('휴대폰 뒷 4자리를 입력해주세요!')
@@ -362,7 +411,7 @@ export function ReserveForm() {
     }
 
     const productIds = [
-      ...Object.keys(singles),
+      ...new Set(Object.keys(singles).map((key) => splitKey(key).productId)),
       ...Object.keys(sets),
       ...(nametagQty > 0 ? [NAMETAG_ID] : []),
     ]
@@ -377,7 +426,9 @@ export function ReserveForm() {
       )
       if (!updated.ok) {
         setSubmitting(false)
-        showToast('예약을 수정하지 못했어요. 잠시 후 다시 시도해주세요.')
+        showToast('예약을 수정하지 못했어요. 남은 수량이 찼거나 잠시 문제가 생겼어요.')
+        const latestCounts = await fetchReservedCounts()
+        if (latestCounts) setReserved(latestCounts)
         return
       }
       // 성공하면 화면을 옮길 때까지 로딩을 그대로 둔다 (중간에 빈 화면이 보이지 않게)
@@ -399,6 +450,18 @@ export function ReserveForm() {
     const saved = await saveReservation(reservation)
     if (!saved.ok) {
       setSubmitting(false)
+      // 누르는 순간에 남이 먼저 가져간 경우 — 서버가 어떤 항목인지 알려준다
+      if (saved.soldOutKey) {
+        const { productId, size } = splitKey(saved.soldOutKey)
+        const product = getProduct(productId)
+        showToast(
+          `${product ? shortNameOf(product) : productId}${size ? ` ${size}` : ''}의 남은 수량이 방금 찼어요. 다시 골라주세요.`,
+        )
+        // 화면의 남은 수량을 최신으로 맞춘다
+        const latestCounts = await fetchReservedCounts()
+        if (latestCounts) setReserved(latestCounts)
+        return
+      }
       showToast('예약을 저장하지 못했어요. 잠시 후 다시 시도해주세요.')
       return
     }
@@ -419,8 +482,8 @@ export function ReserveForm() {
     <div className="size-chips">
       {sizesOf(product).map((size) => {
         const active = isActive(size)
-        const left = leftOf(product.id, size)
-        const soldOut = !active && left <= 0
+        const left = shownLeftOf(product.id, size)
+        const soldOut = !active && leftOf(product.id, size) <= 0
         return (
           <button
             key={size}
@@ -437,6 +500,47 @@ export function ReserveForm() {
       })}
     </div>
   )
+
+  /**
+   * 담은 개수를 조절하는 줄. 카드나 칩은 담기/빼기만 하고,
+   * 두 개 이상은 여기서 늘린다. (카드가 버튼이라 그 안에 버튼을 넣을 수 없다)
+   */
+  const renderQtyRows = (rows: { product: Product; size?: SizeId }[]) => {
+    const picked = rows.filter(({ product, size }) => qtyOf(product.id, size) > 0)
+    if (picked.length === 0) return null
+    return (
+      <ul className="qty-list">
+        {picked.map(({ product, size }) => {
+          const qty = qtyOf(product.id, size)
+          const label = `${shortNameOf(product)}${size ? ` (${size})` : ''}`
+          return (
+            <li key={stockKey(product.id, size)} className="qty-row">
+              <span className="qty-row__name">{label}</span>
+              <span className="qty-row__price">{formatPrice(product.price * qty)}</span>
+              <div className="stepper">
+                <button
+                  type="button"
+                  aria-label={`${label} 한 개 빼기`}
+                  onClick={() => setQty(product.id, size, qty - 1)}
+                >
+                  −
+                </button>
+                <span className="stepper__value">{qty}</span>
+                <button
+                  type="button"
+                  aria-label={`${label} 한 개 더 담기`}
+                  disabled={leftOf(product.id, size) <= 0}
+                  onClick={() => addOne(product, size)}
+                >
+                  +
+                </button>
+              </div>
+            </li>
+          )
+        })}
+      </ul>
+    )
+  }
 
   /** 세트 안에서 고르는 구성품 목록 */
   const renderChoices = (set: Product) => {
@@ -471,8 +575,8 @@ export function ReserveForm() {
                   )
                 }
 
-                const left = leftOf(productId)
-                const soldOut = !picked && left <= 0
+                const left = shownLeftOf(productId)
+                const soldOut = !picked && leftOf(productId) <= 0
                 return (
                   <button
                     key={productId}
@@ -494,6 +598,50 @@ export function ReserveForm() {
           )
         })}
       </>
+    )
+  }
+
+  /** 마감 여부를 아직 모르는 첫 순간 — 폼을 보여줬다 닫으면 어수선하다 */
+  if (preorderOpen === null) {
+    return (
+      <div className="page">
+        <InlineLoading message="사전예약 접수 상태를 확인하는 중…" />
+      </div>
+    )
+  }
+
+  if (!preorderOpen) {
+    return (
+      <div className="page">
+        <header className="page-header" style={{ paddingLeft: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <button className="icon-button" aria-label="뒤로가기" onClick={() => router.back()}>
+              <BackIcon size={22} />
+            </button>
+            <h1 className="page-header__title" style={{ fontSize: 19 }}>
+              사전예약
+            </h1>
+          </div>
+        </header>
+
+        <div className="empty-state">
+          <KeyringArt art="star" />
+          <p>
+            사전예약이 마감됐어요.
+            <br />
+            {LAUNCH_LABEL}에 정식 오픈했습니다!
+          </p>
+          <p className="closed-note">
+            이미 예약하신 분은 <strong>예약 확인</strong>에서 내역을 볼 수 있어요.
+            <br />
+            받는 방법은 청년회에서 따로 안내드릴게요.
+          </p>
+          <Link href="/my" className="empty-state__cta">
+            내 예약 확인하기
+          </Link>
+          <ContactButton variant="quiet" label="문의하기" />
+        </div>
+      </div>
     )
   }
 
@@ -600,20 +748,22 @@ export function ReserveForm() {
           <p className="reserve-section__label">키링</p>
           <ul className="pick-grid">
             {KEYRINGS.map((product) => {
-              const picked = product.id in singles
-              const left = leftOf(product.id)
-              const soldOut = !picked && left <= 0
+              const qty = qtyOf(product.id)
+              const picked = qty > 0
+              const left = shownLeftOf(product.id)
+              const soldOut = !picked && leftOf(product.id) <= 0
               return (
                 <li key={product.id}>
                   <button
                     type="button"
                     className={`pick-card${picked ? ' picked' : ''}`}
                     disabled={soldOut}
-                    onClick={() => toggleKeyring(product)}
+                    onClick={() => toggleSingle(product)}
                     aria-pressed={picked}
                   >
                     <span className="pick-card__thumb">
                       <ProductThumb product={product} className="pick-card__media" />
+                      {qty > 1 && <span className="pick-card__qty">{qty}개</span>}
                     </span>
                     <span className="pick-card__name">{shortNameOf(product)}</span>
                     <span className="pick-card__price">{formatPrice(product.price)}</span>
@@ -623,6 +773,7 @@ export function ReserveForm() {
               )
             })}
           </ul>
+          {renderQtyRows(KEYRINGS.map((product) => ({ product })))}
 
           <p className="reserve-section__label">티셔츠 · 사이즈를 골라주세요</p>
           <ul className="size-list">
@@ -639,9 +790,10 @@ export function ReserveForm() {
                 </div>
                 {renderSizeChips(
                   product,
-                  (size) => singles[product.id] === size,
-                  (size) => pickSingleSize(product, size),
+                  (size) => qtyOf(product.id, size) > 0,
+                  (size) => toggleSingle(product, size),
                 )}
+                {renderQtyRows(sizesOf(product).map((size) => ({ product, size })))}
               </li>
             ))}
           </ul>
@@ -709,7 +861,7 @@ export function ReserveForm() {
                 <p className="addon-row__name">{shortNameOf(NAMETAG)}</p>
                 <p className="addon-row__price">
                   {formatPrice(NAMETAG.price)}
-                  <em>남은 {leftOf(NAMETAG_ID)}개</em>
+                  <em>남은 {shownLeftOf(NAMETAG_ID)}개</em>
                 </p>
                 <p className="addon-row__hint">
                   {tshirtCount === 0
@@ -797,6 +949,11 @@ export function ReserveForm() {
             수정 그만두기
           </button>
         )}
+
+        <div className="contact-block">
+          <p className="contact-block__label">사이즈나 수령 방법이 궁금하신가요?</p>
+          <ContactButton variant="quiet" label="카카오톡으로 문의하기" />
+        </div>
       </form>
 
       <LoadingOverlay
