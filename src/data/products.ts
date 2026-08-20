@@ -30,7 +30,7 @@ export interface Spec {
 export interface SetItem {
   /** 낱개 상품 id — 있으면 이름·사진을 상품에서 가져오고 상세로 이동한다 */
   productId?: string
-  /** 낱개 상품이 없는 구성품(예: 세트 전용 명찰 키링)에 직접 적는 값 */
+  /** 낱개 상품이 없는 구성품에 직접 적는 값 */
   name?: string
   photo?: string
   /** '택 1' 처럼 칸 아래에 붙는 짧은 설명 */
@@ -74,8 +74,6 @@ export interface Product {
   items?: SetItem[]
   /** 세트를 예약할 때 골라야 하는 구성 */
   choices?: SetChoice[]
-  /** 고르지 않아도 세트에 무조건 들어가는 구성품 id */
-  fixedItems?: string[]
   /** 낱개 목록에 노출하지 않는 추가 구성품 (명찰 키링) */
   addOnOnly?: boolean
   /** 사이즈가 없는 상품(키링)의 남은 수량 */
@@ -290,7 +288,7 @@ export const PRODUCTS: Product[] = [
     shortName: '명찰 키링',
     price: 3000,
     description: [
-      '티셔츠와 함께하는 세트 전용 명찰 키링이에요.',
+      '티셔츠와 함께 담는 추가 구성품이에요.',
       '티셔츠 1장당 1개까지 함께 담을 수 있어요.',
     ],
     category: 'keyring',
@@ -332,31 +330,6 @@ export const PRODUCTS: Product[] = [
       { label: '할인', value: '1,000원' },
     ],
     popular: true,
-  },
-  {
-    id: 'set-tshirt-nametag',
-    name: '티셔츠 + 명찰 키링 세트',
-    shortName: '티셔츠+명찰',
-    price: 21000,
-    originalPrice: 22000,
-    description: [
-      '티셔츠 1개와 명찰 키링 1개를 함께 담은 세트예요.',
-      '명찰 키링은 이 세트로만 만나보실 수 있어요!',
-    ],
-    category: 'set',
-    bg: 'var(--color-lavender)',
-    photos: ['/tshirt-1.webp', '/nametag-keyring.webp'],
-    items: [
-      ...TSHIRT_ITEMS.map((productId) => ({ productId, note: '택 1' })),
-      { productId: NAMETAG_ID, note: '세트 포함' },
-    ],
-    choices: [{ from: TSHIRT_ITEMS, count: 1, label: '티셔츠 1개' }],
-    fixedItems: [NAMETAG_ID],
-    specs: [
-      { label: '구성', value: '티셔츠 1개 (3종 중 택 1) + 명찰 키링 1개' },
-      { label: '명찰 키링', value: '세트 전용 (낱개 판매 없음)' },
-      { label: '할인', value: '1,000원' },
-    ],
   },
   {
     id: 'set-tshirt-2',

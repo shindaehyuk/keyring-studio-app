@@ -47,24 +47,12 @@ export function ReserveForm() {
       ? { [preselected.id]: undefined }
       : {},
   )
-  // 명찰 키링으로 담고 싶은 개수. 세트에 이미 들어간 몫은 여기 포함하지 않는다.
-  // 실제로 반영되는 값은 아래에서 상한에 맞춰 깎는다.
+  // 명찰 키링으로 담고 싶은 개수. 실제로 반영되는 값은 아래에서 상한에 맞춰 깎는다
   const [nametagWanted, setNametagWanted] = useState(0)
   // 세트 — 세트 id별로 고른 구성품
   const [sets, setSets] = useState<Record<string, Pick[]>>(() =>
     preselected && preselected.category === 'set' ? { [preselected.id]: [] } : {},
   )
-
-  /** 고르지 않아도 세트에 따라 들어가는 구성품 (명찰 키링 등) */
-  const fixedFromSets = useMemo(() => {
-    const counts = new Map<string, number>()
-    for (const setId of Object.keys(sets)) {
-      for (const id of getProduct(setId)?.fixedItems ?? []) {
-        counts.set(id, (counts.get(id) ?? 0) + 1)
-      }
-    }
-    return counts
-  }, [sets])
 
   /** 담은 티셔츠 장수 — 명찰 키링은 티셔츠 1장당 1개까지 */
   const tshirtCount = useMemo(() => {
@@ -76,17 +64,12 @@ export function ReserveForm() {
     return fromSingles + fromSets
   }, [singles, sets])
 
-  const nametagInSets = fixedFromSets.get(NAMETAG_ID) ?? 0
-  /** 따로 더 담을 수 있는 명찰 키링 개수 — 티셔츠 장수와 남은 수량 중 작은 쪽 */
-  const maxNametagAddOn = Math.max(
-    0,
-    Math.min(tshirtCount - nametagInSets, stockFor(NAMETAG_ID) - nametagInSets),
-  )
+  /** 담을 수 있는 명찰 키링 개수 — 티셔츠 장수와 남은 수량 중 작은 쪽 */
+  const maxNametagAddOn = Math.min(tshirtCount, stockFor(NAMETAG_ID))
 
   /**
    * 실제로 담기는 개수. 상한을 넘으면 깎아서 쓰되 원래 원하던 수는 남겨둔다.
-   * (세트를 열었다가 구성을 고르는 사이처럼 상한이 잠깐 0으로 내려가도
-   *  사용자가 담아둔 수량이 사라지지 않는다)
+   * (티셔츠를 잠깐 뺐다가 다시 담으면 명찰 수량도 그대로 돌아온다)
    */
   const nametagQty = Math.min(nametagWanted, maxNametagAddOn)
 
@@ -99,10 +82,9 @@ export function ReserveForm() {
     }
     for (const [productId, size] of Object.entries(singles)) add(productId, size)
     for (const picks of Object.values(sets)) for (const pick of picks) add(pick.productId, pick.size)
-    for (const [productId, count] of fixedFromSets) add(productId, undefined, count)
     if (nametagQty > 0) add(NAMETAG_ID, undefined, nametagQty)
     return counts
-  }, [singles, sets, fixedFromSets, nametagQty])
+  }, [singles, sets, nametagQty])
 
   const usedOf = (productId: string, size?: SizeId) =>
     demand.get(stockKey(productId, size)) ?? 0
@@ -202,10 +184,9 @@ export function ReserveForm() {
 
     const items: ReservationItem[] = [
       ...Object.entries(singles).map(([productId, size]) => ({ productId, size })),
-      ...Object.entries(sets).flatMap(([setId, picks]) => [
-        ...picks.map((pick) => ({ ...pick, viaSet: setId })),
-        ...(getProduct(setId)?.fixedItems ?? []).map((productId) => ({ productId, viaSet: setId })),
-      ]),
+      ...Object.entries(sets).flatMap(([setId, picks]) =>
+        picks.map((pick) => ({ ...pick, viaSet: setId })),
+      ),
       ...Array.from({ length: nametagQty }, () => ({ productId: NAMETAG_ID })),
     ]
 
@@ -479,8 +460,7 @@ export function ReserveForm() {
                 <p className="addon-row__hint">
                   {tshirtCount === 0
                     ? '티셔츠를 담으면 함께 담을 수 있어요'
-                    : `티셔츠 ${tshirtCount}장 · 최대 ${maxNametagAddOn}개까지` +
-                      (nametagInSets > 0 ? ` (세트에 ${nametagInSets}개 포함)` : '')}
+                    : `티셔츠 ${tshirtCount}장 · 최대 ${maxNametagAddOn}개까지`}
                 </p>
               </div>
               <div className="stepper">
