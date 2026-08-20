@@ -375,10 +375,10 @@ svg {
   margin-top: 14px;
 }
 
-.hero__cta {
-  margin-top: 16px;
-  align-self: flex-start;
-  padding: 9px 18px;
+/* 빈 화면 안내 아래에 놓이는 버튼 — .empty-state 가 가운데로 정렬한다 */
+.empty-state__cta {
+  margin-top: 4px;
+  padding: 11px 20px;
   border-radius: 10px;
   background: var(--color-ink);
   color: #fff;

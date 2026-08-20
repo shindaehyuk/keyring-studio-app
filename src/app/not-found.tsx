@@ -10,7 +10,7 @@ export default function NotFound() {
           <br />
           키링 친구들이 있는 곳으로 돌아가볼까요?
         </p>
-        <Link href="/" className="hero__cta" style={{ marginTop: 4 }}>
+        <Link href="/" className="empty-state__cta">
           홈으로 가기
         </Link>
       </div>
