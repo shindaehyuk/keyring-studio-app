@@ -30,14 +30,18 @@
 
 ## 3. 키 확인
 
-**Project Settings → API** 에서 두 값을 복사합니다.
+**Project Settings → API Keys** 에서 두 값을 복사합니다.
 
-| 이름 | 쓰이는 곳 |
+| 이름 | 환경변수 |
 | --- | --- |
 | `Project URL` | `NEXT_PUBLIC_SUPABASE_URL` |
-| `anon public` 키 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` |
+| `publishable` 키 (`sb_publishable_...`) | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` |
 
-`service_role` 키는 **쓰지 않습니다.** 브라우저에 들어가면 안 되는 키입니다.
+publishable 키는 브라우저에 실려 나가는 공개 키이고, 권한은 RLS 가 막습니다.
+예전 프로젝트에서 쓰던 `anon` 키를 그대로 두고 싶다면
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` 로 넣어도 동작합니다. 둘 다 있으면 publishable 쪽을 씁니다.
+
+`secret` 키(예전 `service_role`)는 **쓰지 않습니다.** 브라우저에 들어가면 안 되는 키입니다.
 
 ## 4. Vercel 연결
 
@@ -46,22 +50,17 @@
 3. **Environment Variables** 에 위 두 값을 넣습니다.
 
    ```
-   NEXT_PUBLIC_SUPABASE_URL      = https://xxxxxxxx.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY = eyJhbGciOi...
+   NEXT_PUBLIC_SUPABASE_URL             = https://xxxxxxxx.supabase.co
+   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = sb_publishable_xxxxxxxx
    ```
 
-   `NEXT_PUBLIC_BASE_PATH` 는 **넣지 마세요.** GitHub Pages 의 `/keyring-studio-app`
-   경로용이라, Vercel 에서 설정하면 링크가 전부 깨집니다.
+   `NEXT_PUBLIC_BASE_PATH` 는 **넣지 마세요.** 서브경로 배포용이라,
+   Vercel 에서 설정하면 링크가 전부 깨집니다.
 
 4. Deploy 를 누르면 끝입니다.
 
-## 5. (선택) GitHub Pages 도 계속 쓰려면
-
-저장소 **Settings → Secrets and variables → Actions** 에 같은 두 값을
-`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` 이름으로 넣으면
-Pages 배포본도 같은 Supabase 를 씁니다. 넣지 않으면 Pages 쪽은 브라우저 저장 모드로 남습니다.
-
-Vercel 로 완전히 옮길 거라면 `.github/workflows/deploy.yml` 을 지워도 됩니다.
+환경변수를 나중에 추가했다면 **Deployments → 최신 배포 → Redeploy** 를 한 번 돌려야 반영됩니다.
+`NEXT_PUBLIC_` 값은 빌드할 때 코드에 박히기 때문입니다.
 
 ---
 
