@@ -17,6 +17,7 @@ import {
 } from '../../data/products'
 import { buildReservation, useAppStore, type ReservationItem } from '../../store/AppStore'
 import { fetchReservedCounts, saveReservation } from '../../lib/reservations'
+import { isSupabaseConfigured } from '../../lib/supabase'
 import { ProductThumb } from '../../components/ProductThumb'
 
 /** 낱개 하나를 고른 결과 */
@@ -82,8 +83,12 @@ export function ReserveForm() {
     return fromSingles + fromSets
   }, [singles, sets])
 
-  /** 담을 수 있는 명찰 키링 개수 — 티셔츠 장수와 남은 수량 중 작은 쪽 */
-  const maxNametagAddOn = Math.min(tshirtCount, stockFor(NAMETAG_ID))
+  /**
+   * 담을 수 있는 명찰 키링 개수 — 티셔츠 장수와 남은 수량 중 작은 쪽.
+   * 남은 수량에는 이미 접수된 몫도 빼야 한다(지금 담은 몫을 빼면 순환이라 제외).
+   */
+  const nametagLeft = stockFor(NAMETAG_ID) - (reserved?.get(NAMETAG_ID) ?? 0)
+  const maxNametagAddOn = Math.max(0, Math.min(tshirtCount, nametagLeft))
 
   /**
    * 실제로 담기는 개수. 상한을 넘으면 깎아서 쓰되 원래 원하던 수는 남겨둔다.
@@ -194,16 +199,24 @@ export function ReserveForm() {
         return showToast(`${shortNameOf(set)}의 구성을 ${missing}개 더 골라주세요!`)
       }
     }
+    if (!agreed) return showToast('개인정보 수집에 동의해주세요!')
+
+    setSubmitting(true)
+
+    // 화면을 열어둔 사이에 남이 먼저 예약했을 수 있어, 넣기 직전에 다시 확인한다
+    const latest = (await fetchReservedCounts()) ?? reserved
+    if (latest) setReserved(latest)
+
     for (const [key, used] of demand) {
       const [productId, size] = key.split(':') as [string, SizeId | undefined]
-      if (used + (reserved?.get(key) ?? 0) > stockFor(productId, size)) {
+      if (used + (latest?.get(key) ?? 0) > stockFor(productId, size)) {
+        setSubmitting(false)
         const product = getProduct(productId)
         return showToast(
-          `${product ? shortNameOf(product) : productId}${size ? ` ${size}` : ''}의 남은 수량을 넘었어요.`,
+          `${product ? shortNameOf(product) : productId}${size ? ` ${size}` : ''}의 남은 수량이 부족해요. 다시 골라주세요.`,
         )
       }
     }
-    if (!agreed) return showToast('개인정보 수집에 동의해주세요!')
 
     const items: ReservationItem[] = [
       ...Object.entries(singles).map(([productId, size]) => ({ productId, size })),
@@ -224,7 +237,6 @@ export function ReserveForm() {
       items,
     })
 
-    setSubmitting(true)
     const saved = await saveReservation(reservation)
     setSubmitting(false)
     if (!saved.ok) {
@@ -340,6 +352,13 @@ export function ReserveForm() {
       </header>
 
       <form className="reserve-form" onSubmit={submit}>
+        {!isSupabaseConfigured && (
+          <p className="reserve-form__warn">
+            지금은 접수 내용이 <strong>서버에 저장되지 않습니다.</strong> 예약해주셔도 담당자가
+            확인할 수 없으니, 이 문구가 보이면 담당자에게 알려주세요.
+          </p>
+        )}
+
         <p className="reserve-form__intro">
           오픈 소식을 가장 먼저 받아보세요!
           <br />

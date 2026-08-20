@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import {
   getProduct,
@@ -108,11 +109,24 @@ export function AdminView() {
   if (!isSupabaseConfigured) {
     return (
       <div className="page admin">
-        <h1 className="admin__title">예약 관리</h1>
+        <div className="admin__head">
+          <h1 className="admin__title">예약 관리</h1>
+          <Link className="admin__button" href="/">
+            사이트로
+          </Link>
+        </div>
         <p className="admin__empty">
           Supabase가 연결되어 있지 않아요.
           <br />
-          NEXT_PUBLIC_SUPABASE_URL과 NEXT_PUBLIC_SUPABASE_ANON_KEY를 설정해주세요.
+          <br />
+          배포 환경변수에 <code>NEXT_PUBLIC_SUPABASE_URL</code>과{' '}
+          <code>NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY</code>를 넣어주세요.
+          <br />
+          (예전 <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code>도 인정합니다)
+          <br />
+          <br />
+          이미 넣으셨다면 <strong>다시 배포</strong>해야 반영됩니다. 이 값들은 빌드할 때 코드에
+          박히기 때문에, 환경변수만 추가하고 재배포하지 않으면 예전 빌드가 그대로 서비스됩니다.
         </p>
       </div>
     )
@@ -129,7 +143,12 @@ export function AdminView() {
   if (!signedIn) {
     return (
       <div className="page admin">
-        <h1 className="admin__title">예약 관리</h1>
+        <div className="admin__head">
+          <h1 className="admin__title">예약 관리</h1>
+          <Link className="admin__button" href="/">
+            사이트로
+          </Link>
+        </div>
         <form className="admin__login" onSubmit={signIn}>
           <label className="field">
             <span className="field__label">이메일</span>
@@ -178,6 +197,9 @@ export function AdminView() {
       <div className="admin__head">
         <h1 className="admin__title">예약 관리</h1>
         <div className="admin__actions">
+          <Link className="admin__button" href="/">
+            사이트로
+          </Link>
           <button className="admin__button" onClick={() => void load()} disabled={busy}>
             새로고침
           </button>
