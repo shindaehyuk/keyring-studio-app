@@ -239,7 +239,16 @@ svg {
   margin-top: 10px;
   font-size: 14px;
   font-weight: 500;
+  line-height: 1.35;
   letter-spacing: -0.01em;
+}
+
+/*
+ * 홈의 3열 그리드는 칸이 좁아 긴 이름이 두 줄로 넘어간다.
+ * 이름 영역을 두 줄로 잡아둬야 같은 줄 카드의 가격 위치가 어긋나지 않는다.
+ */
+.product-grid:not(.product-grid--two) .product-card__name {
+  min-height: 2.7em;
 }
 
 .product-card__price {

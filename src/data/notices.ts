@@ -15,6 +15,16 @@ export interface Notice {
  */
 export const NOTICES: Notice[] = [
   {
+    id: 'preorder-close',
+    date: '2026-08-20',
+    title: '사전예약은 8월 23일 오전 9시 30분에 마감돼요',
+    body: [
+      '정식 오픈과 동시에 사전예약 접수가 끝나요.',
+      '오픈 소식을 먼저 받고 싶다면 그 전에 신청해 주세요!',
+    ],
+    isNew: true,
+  },
+  {
     id: 'preorder-open',
     date: '2026-08-19',
     title: '사자 키링 사전예약을 시작했어요',
@@ -22,7 +32,6 @@ export const NOTICES: Notice[] = [
       '사자 키링 5종의 사전예약을 받고 있어요.',
       '정식 오픈 전까지만 접수하니 서둘러 신청해 주세요!',
     ],
-    isNew: true,
   },
   {
     id: 'tshirt-reveal',
