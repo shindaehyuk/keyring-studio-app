@@ -1312,7 +1312,7 @@ svg {
   max-width: 430px;
   overflow: hidden;
   /* 포스터 위쪽 배경과 같은 크림색 — 이미지가 뜨기 전에도 흰 화면이 보이지 않게 */
-  background: #fcf3e9;
+  background: #faede3;
   will-change: opacity, transform;
 }
 

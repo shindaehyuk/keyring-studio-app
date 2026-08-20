@@ -185,8 +185,8 @@ export const PRODUCTS: Product[] = [
     category: 'tshirt',
     bg: 'var(--color-surface)',
     photo: '/tshirt-1.webp',
+    // 이 상세 이미지에는 시안 안내 문구가 들어 있어 detailCaption을 따로 붙이지 않는다
     detailImage: '/tshirt-1-detail.webp',
-    detailCaption: TSHIRT_DETAIL_CAPTION,
     specs: [
       { label: '구성', value: '티셔츠 1개' },
       { label: '색상', value: '그레이' },
