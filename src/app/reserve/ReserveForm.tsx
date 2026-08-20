@@ -32,6 +32,7 @@ import { isPreorderOpen, LAUNCH_LABEL } from '../../data/site'
 import { isSupabaseConfigured } from '../../lib/supabase'
 import { ProductThumb } from '../../components/ProductThumb'
 import { ButtonSpinner, InlineLoading, LoadingOverlay } from '../../components/Loading'
+import { ContactButton } from '../../components/ContactButton'
 
 /** 낱개 하나를 고른 결과 */
 interface Pick {
@@ -638,6 +639,7 @@ export function ReserveForm() {
           <Link href="/my" className="empty-state__cta">
             내 예약 확인하기
           </Link>
+          <ContactButton variant="quiet" label="문의하기" />
         </div>
       </div>
     )
@@ -947,6 +949,11 @@ export function ReserveForm() {
             수정 그만두기
           </button>
         )}
+
+        <div className="contact-block">
+          <p className="contact-block__label">사이즈나 수령 방법이 궁금하신가요?</p>
+          <ContactButton variant="quiet" label="카카오톡으로 문의하기" />
+        </div>
       </form>
 
       <LoadingOverlay

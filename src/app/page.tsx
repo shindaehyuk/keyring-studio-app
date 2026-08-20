@@ -5,7 +5,8 @@ import { NoticeBanner } from '../components/NoticeBanner'
 import { ProductCard } from '../components/ProductCard'
 import { SplashIntro } from '../components/SplashIntro'
 import { BrandLockup } from '../components/BrandLockup'
-import { PURPOSE } from '../data/site'
+import { ContactButton } from '../components/ContactButton'
+import { CONTACT_EMAIL, CONTACT_KAKAO_URL, PURPOSE } from '../data/site'
 import { PurposeIcon } from '../components/PurposeIcon'
 import { PRODUCTS } from '../data/products'
 
@@ -85,11 +86,21 @@ export default function LandingPage() {
         <Link href="/reserve" className="button-primary">
           사전예약하러 가기
         </Link>
+        <div className="contact-block">
+          <p className="contact-block__label">궁금한 점이 있으신가요?</p>
+          <ContactButton />
+        </div>
       </section>
 
       <footer className="site-footer">
         <BrandLockup className="site-footer__logo brand" />
-        <p>문의 suwonjuice2026@gmail.com</p>
+        <p>
+          문의{' '}
+          <a href={CONTACT_KAKAO_URL} target="_blank" rel="noopener noreferrer">
+            카카오톡 오픈채팅
+          </a>{' '}
+          · {CONTACT_EMAIL}
+        </p>
         <p className="site-footer__fine">본 사이트는 굿즈 홍보 및 사전예약 접수용입니다.</p>
       </footer>
     </div>

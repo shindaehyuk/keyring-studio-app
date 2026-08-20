@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { KeyringArt } from '../../../art/KeyringArt'
 import { PURPOSE } from '../../../data/site'
 import { PurposeIcon } from '../../../components/PurposeIcon'
+import { ContactButton } from '../../../components/ContactButton'
 import { summarizeReservation } from '../../../lib/reservationSummary'
 import { formatPrice } from '../../../data/products'
 import { useAppStore } from '../../../store/AppStore'
@@ -63,6 +64,13 @@ export function DoneView() {
         <Link href="/" className="button-primary" style={{ marginTop: 24 }}>
           홈으로 돌아가기
         </Link>
+
+        <div className="contact-block">
+          <p className="contact-block__label">
+            수령 방법 등 궁금한 점은 오픈채팅방으로 물어봐주세요!
+          </p>
+          <ContactButton />
+        </div>
       </div>
     </div>
   )

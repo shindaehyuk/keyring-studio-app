@@ -13,6 +13,7 @@ import {
 import { EDIT_HANDOFF_KEY } from '../../lib/reservationEdit'
 import { ButtonSpinner, LoadingOverlay } from '../../components/Loading'
 import { usePreorderOpen } from '../../lib/usePreorderOpen'
+import { ContactButton } from '../../components/ContactButton'
 import { isSupabaseConfigured } from '../../lib/supabase'
 import { useAppStore } from '../../store/AppStore'
 
@@ -103,7 +104,10 @@ export default function LookupPage() {
       </header>
 
       {!isSupabaseConfigured ? (
-        <p className="lookup__note">지금은 예약 조회를 쓸 수 없어요. 담당자에게 문의해주세요.</p>
+        <div className="empty-state">
+          <p>지금은 예약 조회를 쓸 수 없어요.</p>
+          <ContactButton variant="quiet" label="담당자에게 문의하기" />
+        </div>
       ) : (
         <>
           <form className="lookup" onSubmit={search}>
@@ -164,6 +168,7 @@ export default function LookupPage() {
                   <br />
                   입력하신 내용을 다시 확인해주세요.
                 </p>
+                <ContactButton variant="quiet" label="예약이 안 보여요, 문의하기" />
               </div>
             ) : (
               <ul className="reservation-list">
@@ -203,6 +208,13 @@ export default function LookupPage() {
                 ))}
               </ul>
             ))}
+
+          {rows === null && (
+            <div className="contact-block">
+              <p className="contact-block__label">예약에 문제가 있으신가요?</p>
+              <ContactButton variant="quiet" label="카카오톡으로 문의하기" />
+            </div>
+          )}
         </>
       )}
 
