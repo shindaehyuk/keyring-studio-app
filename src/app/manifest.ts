@@ -10,10 +10,10 @@ export const dynamic = 'force-static'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: '사자키링 — 아크릴 키링 스튜디오',
-    short_name: '사자키링',
+    name: 'JUICE — 사자 키링 & 말씀 티셔츠',
+    short_name: 'JUICE',
     description:
-      '귀여운 사자 캐릭터 아크릴 키링을 미리 만나고 사전예약해보세요.',
+      '집회 헌금마련을 위한 사자 키링 5종과 말씀 티셔츠 3종. 정식 오픈 전까지 사전예약을 받아요.',
     lang: 'ko',
     start_url: `${base}/`,
     scope: `${base}/`,

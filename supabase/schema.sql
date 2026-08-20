@@ -101,6 +101,53 @@ create view public.reserved_counts as
 grant select on public.reserved_counts to anon, authenticated;
 
 -- ---------------------------------------------------------------
+-- 4-1. 준비 수량
+--      서버도 '무엇을 몇 개 준비했는지' 알아야 초과 접수를 막을 수 있다.
+--      아래 목록은 src/data/products.ts 에서 자동으로 만들어진다.
+--      수량을 바꿨다면 이 파일을 SQL Editor 에서 다시 실행하면 된다.
+-- ---------------------------------------------------------------
+create table if not exists public.product_stock (
+  key      text primary key,          -- 'sponge-lion' 또는 'tshirt-1:L'
+  prepared integer not null check (prepared >= 0)
+);
+
+alter table public.product_stock enable row level security;
+
+drop policy if exists "anyone can read prepared counts" on public.product_stock;
+create policy "anyone can read prepared counts"
+  on public.product_stock for select
+  to anon, authenticated
+  using (true);
+
+-- >>> 준비 수량 (scripts/stock-sql.mjs 가 자동으로 채운다 — 직접 고치지 말 것)
+insert into public.product_stock (key, prepared) values
+  ('sponge-lion', 50),
+  ('spatula-lion', 50),
+  ('coffee-lion', 50),
+  ('snack-lion', 50),
+  ('bible-lion', 50),
+  ('tshirt-1:S', 3),
+  ('tshirt-1:M', 5),
+  ('tshirt-1:L', 10),
+  ('tshirt-1:XL', 10),
+  ('tshirt-1:XXL', 2),
+  ('tshirt-2:M', 5),
+  ('tshirt-2:L', 18),
+  ('tshirt-2:XL', 10),
+  ('tshirt-2:XXL', 2),
+  ('tshirt-3:S', 3),
+  ('tshirt-3:M', 5),
+  ('tshirt-3:L', 15),
+  ('tshirt-3:XL', 10),
+  ('tshirt-3:XXL', 2),
+  ('nametag-keyring', 50)
+on conflict (key) do update set prepared = excluded.prepared;
+
+-- 더 이상 팔지 않는 항목은 정리한다
+delete from public.product_stock where key <> all (array['sponge-lion', 'spatula-lion', 'coffee-lion', 'snack-lion', 'bible-lion', 'tshirt-1:S', 'tshirt-1:M', 'tshirt-1:L', 'tshirt-1:XL', 'tshirt-1:XXL', 'tshirt-2:M', 'tshirt-2:L', 'tshirt-2:XL', 'tshirt-2:XXL', 'tshirt-3:S', 'tshirt-3:M', 'tshirt-3:L', 'tshirt-3:XL', 'tshirt-3:XXL', 'nametag-keyring']);
+-- <<< 준비 수량 끝
+
+-- ---------------------------------------------------------------
 -- 5. 손님용 — 이름 · 휴대폰 뒷 4자리 · 비밀번호가 모두 맞아야 한다
 --
 --    create or replace 는 함수의 반환 타입을 바꾸지 못한다.
@@ -112,6 +159,101 @@ drop function if exists public.cancel_reservation(text, text);
 drop function if exists public.cancel_reservation(text, text, text);
 drop function if exists public.update_reservation(text, text, text, jsonb, text[]);
 drop function if exists public.update_reservation(text, text, text, jsonb, text[], integer);
+drop function if exists public.create_reservation(text, text, text, text, jsonb, text[], integer);
+drop function if exists public.short_of_stock(jsonb, text);
+
+-- 담으려는 구성이 남은 수량을 넘는지 본다.
+-- 넘으면 모자란 항목의 키('tshirt-1:L')를, 괜찮으면 null 을 준다.
+-- p_exclude_id 는 수정 중인 예약 자신의 몫을 빼기 위한 값이다.
+create or replace function public.short_of_stock(
+  p_items      jsonb,
+  p_exclude_id text default null
+)
+returns text
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  need     record;
+  taken    integer;
+  prepared integer;
+begin
+  for need in
+    select (item ->> 'productId') || coalesce(':' || (item ->> 'size'), '') as key,
+           count(*)::int                                                   as want
+      from jsonb_array_elements(p_items) as item
+     group by 1
+  loop
+    select ps.prepared into prepared
+      from public.product_stock ps
+     where ps.key = need.key;
+
+    -- 준비 수량을 모르는 항목은 막지 않는다 (상품을 새로 넣고 이 파일을
+    -- 아직 실행하지 않았더라도 접수는 계속되도록)
+    if prepared is null then
+      continue;
+    end if;
+
+    select count(*)::int into taken
+      from public.reservations r,
+           lateral jsonb_array_elements(r.items) as it
+     where (p_exclude_id is null or r.id <> p_exclude_id)
+       and (it ->> 'productId') || coalesce(':' || (it ->> 'size'), '') = need.key;
+
+    if taken + need.want > prepared then
+      return need.key;
+    end if;
+  end loop;
+
+  return null;
+end;
+$$;
+
+-- 예약 접수 — 수량 확인과 저장을 한 번에 한다.
+--
+-- 화면에서도 담기 전에 남은 수량을 보지만, 마지막 하나를 두 사람이 같은
+-- 순간에 누르면 둘 다 통과해 버린다. 여기서는 접수를 한 줄로 세워
+-- (advisory lock) 확인과 저장 사이에 끼어들 틈을 없앤다.
+--
+-- 돌려주는 값
+--   'ok'             접수됨
+--   'sold_out:<키>'  그 사이에 수량이 찼음
+--   'duplicate'      예약번호가 이미 있음
+create or replace function public.create_reservation(
+  p_id          text,
+  p_name        text,
+  p_phone_last4 text,
+  p_password    text,
+  p_items       jsonb,
+  p_product_ids text[],
+  p_total_price integer
+)
+returns text
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  short text;
+begin
+  -- 같은 순간에 들어온 접수를 차례로 처리한다 (트랜잭션이 끝나면 자동 해제)
+  perform pg_advisory_xact_lock(hashtext('juice:reservation'));
+
+  short := public.short_of_stock(p_items, null);
+  if short is not null then
+    return 'sold_out:' || short;
+  end if;
+
+  insert into public.reservations (id, name, phone_last4, password, items, product_ids, total_price)
+  values (p_id, btrim(p_name), p_phone_last4, p_password, p_items, p_product_ids, p_total_price);
+
+  return 'ok';
+exception
+  when unique_violation then
+    return 'duplicate';
+end;
+$$;
 
 -- 예약 조회
 create or replace function public.find_reservations(
@@ -183,7 +325,16 @@ set search_path = public, extensions
 as $$
 declare
   changed int;
+  short   text;
 begin
+  perform pg_advisory_xact_lock(hashtext('juice:reservation'));
+
+  -- 수정으로도 준비 수량을 넘길 수 있다. 자기 몫은 빼고 센다.
+  short := public.short_of_stock(p_items, p_id);
+  if short is not null then
+    return false;
+  end if;
+
   update public.reservations r
      set items       = p_items,
          product_ids = p_product_ids,
@@ -198,10 +349,13 @@ begin
 end;
 $$;
 
+revoke all on function public.short_of_stock(jsonb, text) from public;
 revoke all on function public.find_reservations(text, text, text) from public;
 revoke all on function public.cancel_reservation(text, text, text) from public;
+revoke all on function public.create_reservation(text, text, text, text, jsonb, text[], integer) from public;
 revoke all on function public.update_reservation(text, text, text, jsonb, text[], integer) from public;
 
 grant execute on function public.find_reservations(text, text, text) to anon, authenticated;
 grant execute on function public.cancel_reservation(text, text, text) to anon, authenticated;
+grant execute on function public.create_reservation(text, text, text, text, jsonb, text[], integer) to anon, authenticated;
 grant execute on function public.update_reservation(text, text, text, jsonb, text[], integer) to anon, authenticated;

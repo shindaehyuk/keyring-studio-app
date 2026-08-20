@@ -55,7 +55,7 @@ export const metadata: Metadata = {
   // 홈 화면에 추가했을 때 아이콘 아래 표시되는 이름
   appleWebApp: {
     capable: true,
-    title: '사자키링',
+    title: 'JUICE',
     statusBarStyle: 'default',
   },
 }

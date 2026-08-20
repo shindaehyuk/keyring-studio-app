@@ -13,11 +13,23 @@ export interface ReservationRow {
   created_at: string
 }
 
+/** 예약 저장 결과 — 수량이 찬 경우에는 어떤 항목인지 함께 알려준다 */
+export type SaveResult =
+  | { ok: true }
+  | { ok: false; soldOutKey?: string; message: string }
+
+/** 서버에 아직 create_reservation 함수가 없을 때 (스키마를 다시 실행하기 전) */
+const isMissingFunction = (error: { code?: string; message?: string }) =>
+  error.code === 'PGRST202' || /function.*does not exist|Could not find the function/i.test(error.message ?? '')
+
 /**
  * 예약을 Supabase에 저장한다.
  * 설정이 없으면 아무것도 하지 않고 성공으로 본다(로컬 저장만으로 동작).
+ *
+ * 저장은 create_reservation 함수를 통해 한다. 남은 수량 확인과 저장이
+ * 한 번에 이뤄져서, 마지막 하나를 두 사람이 동시에 눌러도 한 명만 접수된다.
  */
-export async function saveReservation(reservation: Reservation) {
+export async function saveReservation(reservation: Reservation): Promise<SaveResult> {
   const supabase = getSupabase()
   if (!supabase) {
     // 설정이 없으면 접수 내용이 이 브라우저 밖으로 나가지 않는다.
@@ -29,7 +41,7 @@ export async function saveReservation(reservation: Reservation) {
     return { ok: true as const }
   }
 
-  const { error } = await supabase.from('reservations').insert({
+  const payload = {
     id: reservation.id,
     name: reservation.name,
     phone_last4: reservation.phoneLast4,
@@ -37,10 +49,39 @@ export async function saveReservation(reservation: Reservation) {
     items: reservation.items ?? [],
     product_ids: reservation.productIds,
     total_price: reservation.totalPrice,
+  }
+
+  const insertDirectly = async (): Promise<SaveResult> => {
+    const { error } = await supabase.from('reservations').insert(payload)
+    if (error) return { ok: false as const, message: error.message }
+    return { ok: true as const }
+  }
+
+  const { data, error } = await supabase.rpc('create_reservation', {
+    p_id: payload.id,
+    p_name: payload.name,
+    p_phone_last4: payload.phone_last4,
+    p_password: payload.password,
+    p_items: payload.items,
+    p_product_ids: payload.product_ids,
+    p_total_price: payload.total_price,
   })
 
-  if (error) return { ok: false as const, message: error.message }
-  return { ok: true as const }
+  if (error) {
+    // 스키마를 아직 다시 실행하지 않은 서버에서도 접수가 끊기지 않게 한다
+    if (isMissingFunction(error)) return insertDirectly()
+    return { ok: false as const, message: error.message }
+  }
+
+  const result = typeof data === 'string' ? data : ''
+  if (result === 'ok') return { ok: true as const }
+  if (result.startsWith('sold_out:')) {
+    return { ok: false as const, soldOutKey: result.slice('sold_out:'.length), message: '남은 수량이 부족해요.' }
+  }
+  if (result === 'duplicate') {
+    return { ok: false as const, message: '같은 예약 번호가 이미 있어요. 다시 시도해주세요.' }
+  }
+  return { ok: false as const, message: '예약을 저장하지 못했어요.' }
 }
 
 /**

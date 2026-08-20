@@ -12,6 +12,7 @@ import {
 } from '../../lib/reservations'
 import { EDIT_HANDOFF_KEY } from '../../lib/reservationEdit'
 import { ButtonSpinner, LoadingOverlay } from '../../components/Loading'
+import { usePreorderOpen } from '../../lib/usePreorderOpen'
 import { isSupabaseConfigured } from '../../lib/supabase'
 import { useAppStore } from '../../store/AppStore'
 
@@ -37,6 +38,8 @@ const onlyDigits = (value: string, max = 4) => value.replace(/\D/g, '').slice(-m
 export default function LookupPage() {
   const router = useRouter()
   const { showToast } = useAppStore()
+  // 마감된 뒤에는 구성을 바꿀 수 없다 (조회·취소는 그대로 열어둔다)
+  const canEdit = usePreorderOpen() === true
 
   const [name, setName] = useState('')
   const [phoneLast4, setPhoneLast4] = useState('')
@@ -180,13 +183,15 @@ export default function LookupPage() {
                       <strong>{formatPrice(row.total_price ?? 0)}</strong>
                     </p>
                     <div className="reservation-card__actions">
-                      <button
-                        className="reservation-card__edit"
-                        disabled={movingToEdit}
-                        onClick={() => startEdit(row)}
-                      >
-                        예약 수정
-                      </button>
+                      {canEdit && (
+                        <button
+                          className="reservation-card__edit"
+                          disabled={movingToEdit}
+                          onClick={() => startEdit(row)}
+                        >
+                          예약 수정
+                        </button>
+                      )}
                       <button
                         className="reservation-card__cancel"
                         onClick={() => setConfirming(row)}
