@@ -14,6 +14,9 @@ const TABS = [
 export function BottomNav() {
   const pathname = usePathname()
 
+  // 관리자 화면은 손님용 앱이 아니라 탭바를 띄우지 않는다
+  if (pathname.startsWith('/admin')) return null
+
   return (
     <nav className="bottom-nav">
       {TABS.map(({ href, label, icon: Icon }) => {

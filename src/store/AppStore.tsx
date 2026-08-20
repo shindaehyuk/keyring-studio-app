@@ -24,7 +24,8 @@ export interface ReservationItem {
 export interface Reservation {
   id: string
   name: string
-  contact: string
+  /** 휴대폰 번호 뒷 4자리 — 본인 확인용으로만 받는다 */
+  phoneLast4: string
   /** 예약 목록에 보여줄 상품·세트 id */
   productIds: string[]
   /** 사이즈까지 반영한 실제 구성. 예전 예약 기록에는 없을 수 있다 */
@@ -36,12 +37,26 @@ interface AppStore {
   wishlist: string[]
   toggleWishlist: (productId: string) => void
   reservations: Reservation[]
-  addReservation: (input: Omit<Reservation, 'id' | 'createdAt'>) => Reservation
+  addReservation: (reservation: Reservation) => void
   cancelReservation: (id: string) => void
   showToast: (message: string) => void
 }
 
 const StoreContext = createContext<AppStore | null>(null)
+
+/**
+ * 예약 번호와 접수 시각을 붙여 완성된 예약을 만든다.
+ * 저장(서버)과 화면 반영(로컬)이 같은 값을 쓰도록 만드는 쪽을 분리해 뒀다.
+ */
+export function buildReservation(
+  input: Omit<Reservation, 'id' | 'createdAt'>,
+): Reservation {
+  return {
+    ...input,
+    id: `KS-${Date.now().toString(36).toUpperCase()}`,
+    createdAt: new Date().toISOString(),
+  }
+}
 
 /** SSR 첫 렌더와 클라이언트 하이드레이션이 어긋나지 않도록 마운트 후 localStorage를 읽는다 */
 function usePersistedState<T>(key: string, initial: T) {
@@ -81,14 +96,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   )
 
   const addReservation = useCallback(
-    (input: Omit<Reservation, 'id' | 'createdAt'>) => {
-      const reservation: Reservation = {
-        ...input,
-        id: `KS-${Date.now().toString(36).toUpperCase()}`,
-        createdAt: new Date().toISOString(),
-      }
+    (reservation: Reservation) => {
       setReservations((prev) => [reservation, ...prev])
-      return reservation
     },
     [setReservations],
   )

@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { BackIcon } from '../../art/Icons'
 import {
   formatPrice,
@@ -15,7 +15,8 @@ import {
   type Product,
   type SizeId,
 } from '../../data/products'
-import { useAppStore, type ReservationItem } from '../../store/AppStore'
+import { buildReservation, useAppStore, type ReservationItem } from '../../store/AppStore'
+import { fetchReservedCounts, saveReservation } from '../../lib/reservations'
 import { ProductThumb } from '../../components/ProductThumb'
 
 /** 낱개 하나를 고른 결과 */
@@ -36,8 +37,25 @@ export function ReserveForm() {
   const router = useRouter()
   const { addReservation, showToast } = useAppStore()
   const [name, setName] = useState('')
-  const [contact, setContact] = useState('')
+  const [phoneLast4, setPhoneLast4] = useState('')
   const [agreed, setAgreed] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+
+  /**
+   * 이미 접수된 수량. Supabase가 연결돼 있으면 실제 접수분을 빼고 보여주고,
+   * 없거나 불러오지 못하면 data 파일에 적힌 준비 수량을 그대로 쓴다.
+   */
+  const [reserved, setReserved] = useState<Map<string, number> | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    fetchReservedCounts().then((counts) => {
+      if (alive && counts) setReserved(counts)
+    })
+    return () => {
+      alive = false
+    }
+  }, [])
 
   const preselected = preselectedId ? getProduct(preselectedId) : undefined
 
@@ -89,8 +107,12 @@ export function ReserveForm() {
   const usedOf = (productId: string, size?: SizeId) =>
     demand.get(stockKey(productId, size)) ?? 0
 
-  const leftOf = (productId: string, size?: SizeId) =>
-    stockFor(productId, size) - usedOf(productId, size)
+  /** 준비 수량에서 이미 접수된 몫과 지금 담은 몫을 뺀 값 */
+  const leftOf = (productId: string, size?: SizeId) => {
+    const key = stockKey(productId, size)
+    const alreadyTaken = reserved?.get(key) ?? 0
+    return stockFor(productId, size) - alreadyTaken - usedOf(productId, size)
+  }
 
   // ---- 단품 ----
   const toggleKeyring = (product: Product) => {
@@ -158,10 +180,11 @@ export function ReserveForm() {
 
   const selectedCount = Object.keys(singles).length + Object.keys(sets).length
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault()
+    if (submitting) return
     if (!name.trim()) return showToast('이름을 입력해주세요!')
-    if (!contact.trim()) return showToast('연락처를 입력해주세요!')
+    if (!/^\d{4}$/.test(phoneLast4)) return showToast('휴대폰 뒷 4자리를 입력해주세요!')
     if (selectedCount === 0) return showToast('굿즈를 하나 이상 골라주세요!')
 
     for (const set of SETS) {
@@ -173,7 +196,7 @@ export function ReserveForm() {
     }
     for (const [key, used] of demand) {
       const [productId, size] = key.split(':') as [string, SizeId | undefined]
-      if (used > stockFor(productId, size)) {
+      if (used + (reserved?.get(key) ?? 0) > stockFor(productId, size)) {
         const product = getProduct(productId)
         return showToast(
           `${product ? shortNameOf(product) : productId}${size ? ` ${size}` : ''}의 남은 수량을 넘었어요.`,
@@ -190,9 +213,9 @@ export function ReserveForm() {
       ...Array.from({ length: nametagQty }, () => ({ productId: NAMETAG_ID })),
     ]
 
-    const reservation = addReservation({
+    const reservation = buildReservation({
       name: name.trim(),
-      contact: contact.trim(),
+      phoneLast4,
       productIds: [
         ...Object.keys(singles),
         ...Object.keys(sets),
@@ -200,6 +223,16 @@ export function ReserveForm() {
       ],
       items,
     })
+
+    setSubmitting(true)
+    const saved = await saveReservation(reservation)
+    setSubmitting(false)
+    if (!saved.ok) {
+      showToast('예약을 저장하지 못했어요. 잠시 후 다시 시도해주세요.')
+      return
+    }
+
+    addReservation(reservation)
     router.push(`/reserve/done?id=${reservation.id}`)
   }
 
@@ -326,14 +359,21 @@ export function ReserveForm() {
         </label>
 
         <label className="field">
-          <span className="field__label">연락처</span>
+          <span className="field__label">
+            휴대폰 뒷 4자리 <em className="field__hint">(본인 확인용)</em>
+          </span>
           <input
             className="field__input"
             type="text"
-            value={contact}
-            onChange={(e) => setContact(e.target.value)}
-            placeholder="이메일 또는 휴대폰 번호"
-            maxLength={40}
+            inputMode="numeric"
+            autoComplete="off"
+            value={phoneLast4}
+            onChange={(e) => {
+              // 전체 번호를 붙여넣는 경우가 있어, 숫자만 남기고 뒤에서 4자리를 취한다
+              const digits = e.target.value.replace(/\D/g, '')
+              setPhoneLast4(digits.length > 4 ? digits.slice(-4) : digits)
+            }}
+            placeholder="예) 1234"
           />
         </label>
 
@@ -498,8 +538,8 @@ export function ReserveForm() {
           </span>
         </label>
 
-        <button type="submit" className="button-primary">
-          사전예약 완료하기
+        <button type="submit" className="button-primary" disabled={submitting}>
+          {submitting ? '접수하는 중…' : '사전예약 완료하기'}
         </button>
       </form>
     </div>
