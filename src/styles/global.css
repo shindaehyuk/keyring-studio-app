@@ -1311,14 +1311,8 @@ svg {
   margin: 0 auto;
   max-width: 430px;
   overflow: hidden;
-  /* 포스터 배경과 동일한 크림색 — 남는 영역이 이어져 보인다 */
-  background: #fdf1db;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* 하단 버튼 영역만큼 비워, 포스터가 버튼에 가리지 않게 한다 */
-  padding-bottom: calc(118px + env(safe-area-inset-bottom));
-  /* 배경색은 처음부터 칠해둔다 — 흰 화면에서 크림색으로 넘어가 보이지 않게 */
+  /* 포스터 위쪽 배경과 같은 크림색 — 이미지가 뜨기 전에도 흰 화면이 보이지 않게 */
+  background: #fcf3e9;
   will-change: opacity, transform;
 }
 
@@ -1352,27 +1346,18 @@ html[data-intro-seen='1'] .splash {
   display: none;
 }
 
+/*
+ * 포스터는 배경 장식이 가장자리까지 이어지도록 디자인돼 화면을 꽉 채운다.
+ * 이미지 위쪽에 같은 크림색 여백을 덧대 세로로 길게 만들어 두었기 때문에,
+ * 아래를 기준으로 채우면 잘리는 곳은 그 빈 여백뿐이고 그림은 온전히 남는다.
+ */
 .splash__poster {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  height: auto;
-  /* 세로가 짧은 기기에서는 버튼 위 영역에 맞춰 축소 */
-  max-height: 100%;
-  object-fit: contain;
-  /* 위아래 가장자리를 배경색으로 페이드시켜 경계 없이 중앙 배치 */
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    #000 32px,
-    #000 calc(100% - 44px),
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    #000 32px,
-    #000 calc(100% - 44px),
-    transparent 100%
-  );
+  height: 100%;
+  object-fit: cover;
+  object-position: center bottom;
 }
 
 .splash__bottom {
@@ -1404,10 +1389,11 @@ html[data-intro-seen='1'] .splash {
   animation: splash-bottom-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.16s both;
 }
 
+/* 화면을 꽉 채우는 이미지라 1보다 작게 줄이면 가장자리가 비친다 — 살짝 확대된 상태에서 안착 */
 @keyframes splash-poster-in {
   from {
     opacity: 0;
-    transform: translateY(10px) scale(0.985);
+    transform: scale(1.04);
   }
   to {
     opacity: 1;
