@@ -70,6 +70,8 @@ export function ReserveForm() {
   const [password, setPassword] = useState('')
   const [agreed, setAgreed] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  /** 수정 중 나가려 할 때, 확인을 받으면 이동할 곳 */
+  const [leaveTo, setLeaveTo] = useState<string | null>(null)
 
   /** 예약 확인 화면에서 '수정'으로 넘어온 경우 그 예약 */
   const [editing] = useState<{ row: ReservationRow; credentials: ReservationCredentials } | null>(
@@ -99,6 +101,51 @@ export function ReserveForm() {
       alive = false
     }
   }, [])
+
+  /**
+   * 수정 화면을 떠나면 넘겨받은 예약을 지운다.
+   * 남겨두면 다음에 사전예약에 들어올 때 수정 모드로 잘못 들어간다.
+   */
+  useEffect(() => () => sessionStorage.removeItem(EDIT_HANDOFF_KEY), [])
+
+  // 수정 중에 다른 화면으로 나가려 하면 한 번 물어본다
+  useEffect(() => {
+    if (!editing) return
+
+    const onClick = (e: MouseEvent) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return
+      const anchor = (e.target as HTMLElement | null)?.closest?.('a[href]') as HTMLAnchorElement | null
+      const href = anchor?.getAttribute('href')
+      if (!href || href.startsWith('#')) return
+      e.preventDefault()
+      setLeaveTo(href)
+    }
+
+    // 뒤로가기로 바로 빠져나가지 않도록 기록을 한 칸 쌓아둔다
+    window.history.pushState(null, '', window.location.href)
+    const onPopState = () => {
+      window.history.pushState(null, '', window.location.href)
+      setLeaveTo('/my')
+    }
+    // 새로고침·탭 닫기는 브라우저 기본 확인창에 맡긴다
+    const onBeforeUnload = (e: BeforeUnloadEvent) => e.preventDefault()
+
+    document.addEventListener('click', onClick, true)
+    window.addEventListener('popstate', onPopState)
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => {
+      document.removeEventListener('click', onClick, true)
+      window.removeEventListener('popstate', onPopState)
+      window.removeEventListener('beforeunload', onBeforeUnload)
+    }
+  }, [editing])
+
+  const leaveNow = () => {
+    const target = leaveTo
+    setLeaveTo(null)
+    sessionStorage.removeItem(EDIT_HANDOFF_KEY)
+    if (target) router.push(target)
+  }
 
   const preselected = preselectedId ? getProduct(preselectedId) : undefined
   const prefill = editing ? splitItems(editing.row.items ?? []) : null
@@ -427,7 +474,11 @@ export function ReserveForm() {
     <div className="page">
       <header className="page-header" style={{ paddingLeft: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <button className="icon-button" aria-label="뒤로가기" onClick={() => router.back()}>
+          <button
+            className="icon-button"
+            aria-label="뒤로가기"
+            onClick={() => (editing ? setLeaveTo('/my') : router.back())}
+          >
             <BackIcon size={22} />
           </button>
           <h1 className="page-header__title" style={{ fontSize: 19 }}>
@@ -697,6 +748,33 @@ export function ReserveForm() {
           </button>
         )}
       </form>
+
+      {leaveTo && (
+        <div
+          className="modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="수정 취소 확인"
+          onClick={() => setLeaveTo(null)}
+        >
+          <div className="modal__panel" onClick={(e) => e.stopPropagation()}>
+            <p className="modal__title">수정을 취소하시겠습니까?</p>
+            <p className="modal__desc">
+              지금 나가면 바꾼 내용이 저장되지 않아요.
+              <br />
+              예약은 수정 전 상태로 그대로 남습니다.
+            </p>
+            <div className="modal__actions">
+              <button className="modal__button" onClick={() => setLeaveTo(null)}>
+                계속 수정하기
+              </button>
+              <button className="modal__button modal__button--danger" onClick={leaveNow}>
+                나가기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
