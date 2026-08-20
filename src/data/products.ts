@@ -220,7 +220,7 @@ export const PRODUCTS: Product[] = [
     category: 'tshirt',
     bg: 'var(--color-surface)',
     photo: '/tshirt-1.webp',
-    sizeStock: { M: 5, L: 18, XL: 10, XXL: 2 },
+    sizeStock: { S: 3, M: 5, L: 10, XL: 10, XXL: 2 },
     // 이 상세 이미지에는 시안 안내 문구가 들어 있어 detailCaption을 따로 붙이지 않는다
     detailImage: '/tshirt-1-detail.webp',
     specs: [
@@ -244,7 +244,7 @@ export const PRODUCTS: Product[] = [
     category: 'tshirt',
     bg: 'var(--color-blue)',
     photo: '/tshirt-2.webp',
-    sizeStock: { S: 3, M: 5, L: 10, XL: 10, XXL: 2 },
+    sizeStock: { M: 5, L: 18, XL: 10, XXL: 2 },
     detailImage: '/tshirt-2-detail.webp',
     detailCaption: TSHIRT_DETAIL_CAPTION,
     specs: [
