@@ -26,6 +26,8 @@ export interface Reservation {
   name: string
   /** 휴대폰 번호 뒷 4자리 — 본인 확인용으로만 받는다 */
   phoneLast4: string
+  /** 예약 확인·취소·수정에 쓰는 4자리 비밀번호. 서버에는 해시로만 저장된다 */
+  password: string
   /** 예약 목록에 보여줄 상품·세트 id */
   productIds: string[]
   /** 사이즈까지 반영한 실제 구성. 예전 예약 기록에는 없을 수 있다 */
@@ -97,7 +99,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   const addReservation = useCallback(
     (reservation: Reservation) => {
-      setReservations((prev) => [reservation, ...prev])
+      // 비밀번호는 브라우저에 남기지 않는다 — 확인·취소는 서버에서 검사한다
+      setReservations((prev) => [{ ...reservation, password: '' }, ...prev])
     },
     [setReservations],
   )

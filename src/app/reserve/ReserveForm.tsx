@@ -16,7 +16,14 @@ import {
   type SizeId,
 } from '../../data/products'
 import { buildReservation, useAppStore, type ReservationItem } from '../../store/AppStore'
-import { fetchReservedCounts, saveReservation } from '../../lib/reservations'
+import {
+  fetchReservedCounts,
+  saveReservation,
+  updateReservationOnServer,
+  type ReservationCredentials,
+  type ReservationRow,
+} from '../../lib/reservations'
+import { EDIT_HANDOFF_KEY } from '../../lib/reservationEdit'
 import { isSupabaseConfigured } from '../../lib/supabase'
 import { ProductThumb } from '../../components/ProductThumb'
 
@@ -33,14 +40,49 @@ const NAMETAG = getProduct(NAMETAG_ID)
 
 const samePick = (a: Pick, b: Pick) => a.productId === b.productId && a.size === b.size
 
+/** 저장돼 있던 구성을 폼 상태로 되돌린다 */
+function splitItems(items: ReservationItem[]) {
+  const singles: Record<string, SizeId | undefined> = {}
+  const sets: Record<string, Pick[]> = {}
+  let nametag = 0
+
+  for (const item of items) {
+    if (item.viaSet) {
+      sets[item.viaSet] = [
+        ...(sets[item.viaSet] ?? []),
+        { productId: item.productId, size: item.size },
+      ]
+    } else if (item.productId === NAMETAG_ID) {
+      nametag += 1
+    } else {
+      singles[item.productId] = item.size
+    }
+  }
+  return { singles, sets, nametag }
+}
+
 export function ReserveForm() {
   const preselectedId = useSearchParams().get('p') ?? undefined
   const router = useRouter()
   const { addReservation, showToast } = useAppStore()
   const [name, setName] = useState('')
   const [phoneLast4, setPhoneLast4] = useState('')
+  const [password, setPassword] = useState('')
   const [agreed, setAgreed] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+
+  /** 예약 확인 화면에서 '수정'으로 넘어온 경우 그 예약 */
+  const [editing] = useState<{ row: ReservationRow; credentials: ReservationCredentials } | null>(
+    () => {
+      if (typeof window === 'undefined') return null
+      try {
+        const raw = sessionStorage.getItem(EDIT_HANDOFF_KEY)
+        return raw ? JSON.parse(raw) : null
+      } catch {
+        return null
+      }
+    },
+  )
 
   /**
    * 이미 접수된 수량. Supabase가 연결돼 있으면 실제 접수분을 빼고 보여주고,
@@ -59,19 +101,39 @@ export function ReserveForm() {
   }, [])
 
   const preselected = preselectedId ? getProduct(preselectedId) : undefined
+  const prefill = editing ? splitItems(editing.row.items ?? []) : null
 
   // 단품 — 사이즈가 없는 상품은 값이 undefined인 채로 키만 들어간다
-  const [singles, setSingles] = useState<Record<string, SizeId | undefined>>(() =>
-    preselected && preselected.category === 'keyring' && !preselected.addOnOnly
+  const [singles, setSingles] = useState<Record<string, SizeId | undefined>>(() => {
+    if (prefill) return prefill.singles
+    return preselected && preselected.category === 'keyring' && !preselected.addOnOnly
       ? { [preselected.id]: undefined }
-      : {},
-  )
+      : {}
+  })
   // 명찰 키링으로 담고 싶은 개수. 실제로 반영되는 값은 아래에서 상한에 맞춰 깎는다
-  const [nametagWanted, setNametagWanted] = useState(0)
+  const [nametagWanted, setNametagWanted] = useState(prefill?.nametag ?? 0)
   // 세트 — 세트 id별로 고른 구성품
-  const [sets, setSets] = useState<Record<string, Pick[]>>(() =>
-    preselected && preselected.category === 'set' ? { [preselected.id]: [] } : {},
-  )
+  const [sets, setSets] = useState<Record<string, Pick[]>>(() => {
+    if (prefill) return prefill.sets
+    return preselected && preselected.category === 'set' ? { [preselected.id]: [] } : {}
+  })
+
+  /**
+   * 수정 중인 예약이 이미 잡고 있던 몫.
+   * 남은 수량을 볼 때 이건 빼줘야 자기 예약 때문에 품절로 보이지 않는다.
+   */
+  const ownCounts = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const item of editing?.row.items ?? []) {
+      const key = stockKey(item.productId, item.size)
+      counts.set(key, (counts.get(key) ?? 0) + 1)
+    }
+    return counts
+  }, [editing])
+
+  /** 남이 이미 잡아간 수량 (내 예약 몫은 제외) */
+  const takenOf = (key: string, counts = reserved) =>
+    Math.max(0, (counts?.get(key) ?? 0) - (ownCounts.get(key) ?? 0))
 
   /** 담은 티셔츠 장수 — 명찰 키링은 티셔츠 1장당 1개까지 */
   const tshirtCount = useMemo(() => {
@@ -87,7 +149,7 @@ export function ReserveForm() {
    * 담을 수 있는 명찰 키링 개수 — 티셔츠 장수와 남은 수량 중 작은 쪽.
    * 남은 수량에는 이미 접수된 몫도 빼야 한다(지금 담은 몫을 빼면 순환이라 제외).
    */
-  const nametagLeft = stockFor(NAMETAG_ID) - (reserved?.get(NAMETAG_ID) ?? 0)
+  const nametagLeft = stockFor(NAMETAG_ID) - takenOf(NAMETAG_ID)
   const maxNametagAddOn = Math.max(0, Math.min(tshirtCount, nametagLeft))
 
   /**
@@ -112,11 +174,10 @@ export function ReserveForm() {
   const usedOf = (productId: string, size?: SizeId) =>
     demand.get(stockKey(productId, size)) ?? 0
 
-  /** 준비 수량에서 이미 접수된 몫과 지금 담은 몫을 뺀 값 */
+  /** 준비 수량에서 남이 잡은 몫과 지금 담은 몫을 뺀 값 */
   const leftOf = (productId: string, size?: SizeId) => {
     const key = stockKey(productId, size)
-    const alreadyTaken = reserved?.get(key) ?? 0
-    return stockFor(productId, size) - alreadyTaken - usedOf(productId, size)
+    return stockFor(productId, size) - takenOf(key) - usedOf(productId, size)
   }
 
   // ---- 단품 ----
@@ -188,8 +249,11 @@ export function ReserveForm() {
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     if (submitting) return
-    if (!name.trim()) return showToast('이름을 입력해주세요!')
-    if (!/^\d{4}$/.test(phoneLast4)) return showToast('휴대폰 뒷 4자리를 입력해주세요!')
+    if (!editing) {
+      if (!name.trim()) return showToast('이름을 입력해주세요!')
+      if (!/^\d{4}$/.test(phoneLast4)) return showToast('휴대폰 뒷 4자리를 입력해주세요!')
+      if (!/^\d{4}$/.test(password)) return showToast('예약 비밀번호 4자리를 정해주세요!')
+    }
     if (selectedCount === 0) return showToast('굿즈를 하나 이상 골라주세요!')
 
     for (const set of SETS) {
@@ -199,7 +263,7 @@ export function ReserveForm() {
         return showToast(`${shortNameOf(set)}의 구성을 ${missing}개 더 골라주세요!`)
       }
     }
-    if (!agreed) return showToast('개인정보 수집에 동의해주세요!')
+    if (!editing && !agreed) return showToast('개인정보 수집에 동의해주세요!')
 
     setSubmitting(true)
 
@@ -209,7 +273,7 @@ export function ReserveForm() {
 
     for (const [key, used] of demand) {
       const [productId, size] = key.split(':') as [string, SizeId | undefined]
-      if (used + (latest?.get(key) ?? 0) > stockFor(productId, size)) {
+      if (used + takenOf(key, latest) > stockFor(productId, size)) {
         setSubmitting(false)
         const product = getProduct(productId)
         return showToast(
@@ -226,14 +290,35 @@ export function ReserveForm() {
       ...Array.from({ length: nametagQty }, () => ({ productId: NAMETAG_ID })),
     ]
 
+    const productIds = [
+      ...Object.keys(singles),
+      ...Object.keys(sets),
+      ...(nametagQty > 0 ? [NAMETAG_ID] : []),
+    ]
+
+    if (editing) {
+      const updated = await updateReservationOnServer(
+        editing.row.id,
+        editing.credentials,
+        items,
+        productIds,
+      )
+      setSubmitting(false)
+      if (!updated.ok) {
+        showToast('예약을 수정하지 못했어요. 잠시 후 다시 시도해주세요.')
+        return
+      }
+      sessionStorage.removeItem(EDIT_HANDOFF_KEY)
+      showToast('예약을 수정했어요.')
+      router.push('/my')
+      return
+    }
+
     const reservation = buildReservation({
       name: name.trim(),
       phoneLast4,
-      productIds: [
-        ...Object.keys(singles),
-        ...Object.keys(sets),
-        ...(nametagQty > 0 ? [NAMETAG_ID] : []),
-      ],
+      password,
+      productIds,
       items,
     })
 
@@ -346,7 +431,7 @@ export function ReserveForm() {
             <BackIcon size={22} />
           </button>
           <h1 className="page-header__title" style={{ fontSize: 19 }}>
-            사전예약
+            {editing ? '예약 수정' : '사전예약'}
           </h1>
         </div>
       </header>
@@ -365,36 +450,66 @@ export function ReserveForm() {
           사전예약해주시면 수량을 준비하는 데 큰 도움이 돼요.
         </p>
 
-        <label className="field">
-          <span className="field__label">이름</span>
-          <input
-            className="field__input"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="이름을 입력해주세요"
-            maxLength={20}
-          />
-        </label>
+        {editing ? (
+          <div className="edit-note">
+            <p className="edit-note__title">예약 수정 중</p>
+            <p className="edit-note__desc">
+              {editing.row.name}님의 예약 {editing.row.id}
+              <br />
+              담을 굿즈를 다시 고른 뒤 저장하면 바뀝니다.
+            </p>
+          </div>
+        ) : (
+          <label className="field">
+            <span className="field__label">이름</span>
+            <input
+              className="field__input"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="이름을 입력해주세요"
+              maxLength={20}
+            />
+          </label>
+        )}
 
-        <label className="field">
-          <span className="field__label">
-            휴대폰 뒷 4자리 <em className="field__hint">(본인 확인용)</em>
-          </span>
-          <input
-            className="field__input"
-            type="text"
-            inputMode="numeric"
-            autoComplete="off"
-            value={phoneLast4}
-            onChange={(e) => {
-              // 전체 번호를 붙여넣는 경우가 있어, 숫자만 남기고 뒤에서 4자리를 취한다
-              const digits = e.target.value.replace(/\D/g, '')
-              setPhoneLast4(digits.length > 4 ? digits.slice(-4) : digits)
-            }}
-            placeholder="예) 1234"
-          />
-        </label>
+        {!editing && (
+          <>
+            <label className="field">
+              <span className="field__label">
+                휴대폰 뒷 4자리 <em className="field__hint">(본인 확인용)</em>
+              </span>
+              <input
+                className="field__input"
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                value={phoneLast4}
+                onChange={(e) => {
+                  // 전체 번호를 붙여넣는 경우가 있어, 숫자만 남기고 뒤에서 4자리를 취한다
+                  const digits = e.target.value.replace(/\D/g, '')
+                  setPhoneLast4(digits.length > 4 ? digits.slice(-4) : digits)
+                }}
+                placeholder="예) 1234"
+              />
+            </label>
+
+            <label className="field">
+              <span className="field__label">
+                예약 비밀번호 4자리 <em className="field__hint">(예약 확인·취소에 필요해요)</em>
+              </span>
+              <input
+                className="field__input"
+                type="password"
+                inputMode="numeric"
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                placeholder="숫자 4자리"
+              />
+            </label>
+          </>
+        )}
 
         {/* ---- 단품 ---- */}
         <section className="reserve-section">
@@ -545,6 +660,7 @@ export function ReserveForm() {
           </section>
         )}
 
+        {!editing && (
         <label className="agree-row">
           <input
             type="checkbox"
@@ -556,10 +672,30 @@ export function ReserveForm() {
             파기됩니다.
           </span>
         </label>
+        )}
 
         <button type="submit" className="button-primary" disabled={submitting}>
-          {submitting ? '접수하는 중…' : '사전예약 완료하기'}
+          {submitting
+            ? editing
+              ? '저장하는 중…'
+              : '접수하는 중…'
+            : editing
+              ? '수정 저장하기'
+              : '사전예약 완료하기'}
         </button>
+
+        {editing && (
+          <button
+            type="button"
+            className="reserve-form__cancel-edit"
+            onClick={() => {
+              sessionStorage.removeItem(EDIT_HANDOFF_KEY)
+              router.push('/my')
+            }}
+          >
+            수정 그만두기
+          </button>
+        )}
       </form>
     </div>
   )
