@@ -21,6 +21,13 @@ const SLIDES = [
     height: 941,
   },
   {
+    image: '/banner-tshirt-nametag.webp',
+    alt: '티셔츠 + 명찰 키링 — 티셔츠를 담으면 명찰 키링을 함께 담을 수 있어요',
+    href: '/reserve',
+    width: 1672,
+    height: 941,
+  },
+  {
     image: '/banner-tshirt-1.webp',
     alt: 'PRAY WITHOUT CEASING — 쉬지말고 기도하라 티셔츠',
     href: '/product/tshirt-1',
