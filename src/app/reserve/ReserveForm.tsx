@@ -27,6 +27,7 @@ import { EDIT_HANDOFF_KEY } from '../../lib/reservationEdit'
 import { totalPriceOfItems } from '../../lib/price'
 import { isSupabaseConfigured } from '../../lib/supabase'
 import { ProductThumb } from '../../components/ProductThumb'
+import { ButtonSpinner, InlineLoading, LoadingOverlay } from '../../components/Loading'
 
 /** 낱개 하나를 고른 결과 */
 interface Pick {
@@ -92,11 +93,15 @@ export function ReserveForm() {
    * 없거나 불러오지 못하면 data 파일에 적힌 준비 수량을 그대로 쓴다.
    */
   const [reserved, setReserved] = useState<Map<string, number> | null>(null)
+  /** 처음 남은 수량을 불러오는 동안 */
+  const [loadingStock, setLoadingStock] = useState(isSupabaseConfigured)
 
   useEffect(() => {
     let alive = true
     fetchReservedCounts().then((counts) => {
-      if (alive && counts) setReserved(counts)
+      if (!alive) return
+      if (counts) setReserved(counts)
+      setLoadingStock(false)
     })
     return () => {
       alive = false
@@ -370,11 +375,12 @@ export function ReserveForm() {
         productIds,
         totalPrice,
       )
-      setSubmitting(false)
       if (!updated.ok) {
+        setSubmitting(false)
         showToast('예약을 수정하지 못했어요. 잠시 후 다시 시도해주세요.')
         return
       }
+      // 성공하면 화면을 옮길 때까지 로딩을 그대로 둔다 (중간에 빈 화면이 보이지 않게)
       sessionStorage.removeItem(EDIT_HANDOFF_KEY)
       showToast('예약을 수정했어요.')
       router.push('/my')
@@ -391,8 +397,8 @@ export function ReserveForm() {
     })
 
     const saved = await saveReservation(reservation)
-    setSubmitting(false)
     if (!saved.ok) {
+      setSubmitting(false)
       showToast('예약을 저장하지 못했어요. 잠시 후 다시 시도해주세요.')
       return
     }
@@ -589,6 +595,8 @@ export function ReserveForm() {
             단품으로 담기 <em>낱개로 고르기</em>
           </h2>
 
+          {loadingStock && <InlineLoading message="남은 수량을 확인하는 중…" />}
+
           <p className="reserve-section__label">키링</p>
           <ul className="pick-grid">
             {KEYRINGS.map((product) => {
@@ -767,6 +775,7 @@ export function ReserveForm() {
         )}
 
         <button type="submit" className="button-primary" disabled={submitting}>
+          {submitting && <ButtonSpinner />}
           {submitting
             ? editing
               ? '저장하는 중…'
@@ -789,6 +798,11 @@ export function ReserveForm() {
           </button>
         )}
       </form>
+
+      <LoadingOverlay
+        active={submitting}
+        message={editing ? '수정 내용을 저장하는 중…' : '예약을 접수하는 중…'}
+      />
 
       {leaveTo && (
         <div

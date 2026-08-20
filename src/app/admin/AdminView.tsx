@@ -18,6 +18,7 @@ import {
   type ReservationRow,
 } from '../../lib/reservations'
 import { getSupabase, isSupabaseConfigured } from '../../lib/supabase'
+import { ButtonSpinner, InlineLoading, LoadingOverlay, Spinner } from '../../components/Loading'
 
 const formatWhen = (iso: string) =>
   new Date(iso).toLocaleString('ko-KR', {
@@ -157,7 +158,7 @@ export function AdminView() {
   if (checking) {
     return (
       <div className="page admin">
-        <p className="admin__empty">불러오는 중…</p>
+        <InlineLoading message="관리자 정보를 확인하는 중…" />
       </div>
     )
   }
@@ -194,9 +195,12 @@ export function AdminView() {
           </label>
           {error && <p className="admin__error">{error}</p>}
           <button type="submit" className="button-primary" disabled={busy}>
+            {busy && <ButtonSpinner />}
             {busy ? '확인하는 중…' : '로그인'}
           </button>
         </form>
+
+        <LoadingOverlay active={busy} message="로그인하는 중…" />
       </div>
     )
   }
@@ -223,8 +227,14 @@ export function AdminView() {
           <Link className="admin__button" href="/">
             사이트로
           </Link>
-          <button className="admin__button" onClick={() => void load()} disabled={busy}>
-            새로고침
+          {/* 글자를 바꾸면 버튼 너비가 달라져 머리글이 밀리므로, 자리만 원으로 바꾼다 */}
+          <button
+            className="admin__button"
+            onClick={() => void load()}
+            disabled={busy}
+            aria-label="새로고침"
+          >
+            {busy ? <Spinner size={14} /> : '새로고침'}
           </button>
           <button className="admin__button" onClick={() => void signOut()}>
             로그아웃
@@ -268,6 +278,7 @@ export function AdminView() {
       </div>
 
       <h2 className="admin__section">예약 목록</h2>
+      {rows === null && busy && <InlineLoading message="예약을 불러오는 중…" />}
       {rows && rows.length === 0 && <p className="admin__empty">아직 접수된 예약이 없어요.</p>}
       <ul className="admin__list">
         {(rows ?? []).map((row) => (
@@ -325,12 +336,15 @@ export function AdminView() {
                 disabled={deleting}
                 onClick={() => void remove()}
               >
+                {deleting && <ButtonSpinner />}
                 {deleting ? '삭제하는 중…' : '삭제'}
               </button>
             </div>
           </div>
         </div>
       )}
+
+      <LoadingOverlay active={deleting} message="예약을 삭제하는 중…" />
     </div>
   )
 }

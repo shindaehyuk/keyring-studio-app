@@ -1810,6 +1810,104 @@ img.addon-row__media {
   }
 }
 
+/* ---------- 로딩 ---------- */
+.spinner {
+  display: inline-block;
+  flex-shrink: 0;
+  border-style: solid;
+  border-color: var(--color-line);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spinner-turn 0.7s linear infinite;
+}
+
+.spinner--on-dark {
+  border-color: rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+}
+
+@keyframes spinner-turn {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+/* 모달(200)보다 위에 깔려서 통신 중에는 아무것도 누르지 못한다 */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(25, 25, 25, 0.32);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  animation: modal-fade 0.18s ease;
+}
+
+.loading-overlay__panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-width: 180px;
+  padding: 24px 26px 20px;
+  border-radius: 18px;
+  background: var(--color-bg);
+  box-shadow: 0 12px 32px rgba(25, 25, 25, 0.16);
+  animation: modal-rise 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.loading-overlay__text {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-ink);
+  text-align: center;
+  word-break: keep-all;
+}
+
+.loading-inline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 18px 0;
+  font-size: 13px;
+  color: var(--color-sub);
+}
+
+/* 버튼 안에서 글자와 나란히 */
+.button-primary .spinner,
+.modal__button .spinner {
+  margin-right: 7px;
+  vertical-align: -3px;
+}
+
+/* 불러오는 동안 글자 자리에 원만 들어가도 너비가 흔들리지 않게 */
+.admin__button {
+  justify-content: center;
+  min-width: 62px;
+  white-space: nowrap;
+}
+
+.admin__button:disabled,
+.reservation-card__edit:disabled,
+.reservation-card__cancel:disabled {
+  opacity: 0.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 1.4s;
+  }
+
+  .loading-overlay,
+  .loading-overlay__panel {
+    animation: none;
+  }
+}
+
 /* ---------- 예약 수정 안내 ---------- */
 .edit-note {
   padding: 14px;
