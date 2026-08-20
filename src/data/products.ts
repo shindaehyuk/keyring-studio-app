@@ -74,6 +74,10 @@ export interface Product {
   items?: SetItem[]
   /** 세트를 예약할 때 골라야 하는 구성 */
   choices?: SetChoice[]
+  /** 고르지 않아도 세트에 무조건 들어가는 구성품 id */
+  fixedItems?: string[]
+  /** 낱개 목록에 노출하지 않는 추가 구성품 (명찰 키링) */
+  addOnOnly?: boolean
   /** 사이즈가 없는 상품(키링)의 남은 수량 */
   stock?: number
   /** 사이즈별 남은 수량(티셔츠) */
@@ -99,6 +103,9 @@ const TSHIRT_DETAIL_CAPTION =
 /** 세트에서 고를 수 있는 구성품 목록 */
 const KEYRING_IDS = ['sponge-lion', 'spatula-lion', 'coffee-lion', 'snack-lion', 'bible-lion']
 const TSHIRT_ITEMS = ['tshirt-1', 'tshirt-2', 'tshirt-3']
+
+/** 티셔츠를 담아야만 함께 담을 수 있는 추가 구성품 */
+export const NAMETAG_ID = 'nametag-keyring'
 
 export const PRODUCTS: Product[] = [
   {
@@ -275,6 +282,29 @@ export const PRODUCTS: Product[] = [
     ],
   },
 
+  // ---- 추가 구성: 티셔츠를 담아야 함께 담을 수 있다 ----
+  {
+    id: NAMETAG_ID,
+    name: '명찰 키링',
+    // shortNameOf가 '키링'을 떼어내지 않도록 그대로 지정한다
+    shortName: '명찰 키링',
+    price: 3000,
+    description: [
+      '티셔츠와 함께하는 세트 전용 명찰 키링이에요.',
+      '티셔츠 1장당 1개까지 함께 담을 수 있어요.',
+    ],
+    category: 'keyring',
+    bg: 'var(--color-lavender)',
+    photo: '/nametag-keyring.webp',
+    addOnOnly: true,
+    stock: 50,
+    specs: [
+      { label: '구성', value: '명찰 키링 1개' },
+      { label: '판매 방식', value: '티셔츠와 함께만 구매 가능' },
+      { label: '수량 제한', value: '티셔츠 1장당 1개' },
+    ],
+  },
+
   // ---- 세트상품: 낱개로 살 때보다 저렴한 구성 ----
   {
     id: 'set-keyring-3',
@@ -318,9 +348,10 @@ export const PRODUCTS: Product[] = [
     photos: ['/tshirt-1.webp', '/nametag-keyring.webp'],
     items: [
       ...TSHIRT_ITEMS.map((productId) => ({ productId, note: '택 1' })),
-      { name: '명찰 키링', photo: '/nametag-keyring.webp', note: '세트 전용' },
+      { productId: NAMETAG_ID, note: '세트 포함' },
     ],
     choices: [{ from: TSHIRT_ITEMS, count: 1, label: '티셔츠 1개' }],
+    fixedItems: [NAMETAG_ID],
     specs: [
       { label: '구성', value: '티셔츠 1개 (3종 중 택 1) + 명찰 키링 1개' },
       { label: '명찰 키링', value: '세트 전용 (낱개 판매 없음)' },
@@ -370,6 +401,9 @@ export const PRODUCTS: Product[] = [
 ]
 
 export const getProduct = (id: string) => PRODUCTS.find((p) => p.id === id)
+
+/** 컬렉션·위시리스트 등 목록에 보여줄 상품 (추가 구성품은 제외) */
+export const LISTED_PRODUCTS = PRODUCTS.filter((p) => !p.addOnOnly)
 
 export const shortNameOf = (product: Product) =>
   product.shortName ?? product.name.replace(' 키링', '')

@@ -24,7 +24,16 @@ export function summarizeReservation(reservation: Reservation): string[] {
       .filter((name): name is string => Boolean(name))
   }
 
-  const lines = items.filter((item) => !item.viaSet).map(labelOf)
+  // 같은 구성이 여러 개면 'x 2'로 묶는다 (명찰 키링처럼 개수로 담는 것)
+  const singleCounts = new Map<string, number>()
+  for (const item of items) {
+    if (item.viaSet) continue
+    const label = labelOf(item)
+    singleCounts.set(label, (singleCounts.get(label) ?? 0) + 1)
+  }
+  const lines = Array.from(singleCounts, ([label, count]) =>
+    count > 1 ? `${label} × ${count}` : label,
+  )
 
   const bySet = new Map<string, ReservationItem[]>()
   for (const item of items) {

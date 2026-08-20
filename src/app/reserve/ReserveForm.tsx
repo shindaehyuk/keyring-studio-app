@@ -6,6 +6,7 @@ import { BackIcon } from '../../art/Icons'
 import {
   formatPrice,
   getProduct,
+  NAMETAG_ID,
   PRODUCTS,
   shortNameOf,
   sizesOf,
@@ -23,9 +24,10 @@ interface Pick {
   size?: SizeId
 }
 
-const KEYRINGS = PRODUCTS.filter((p) => p.category === 'keyring')
+const KEYRINGS = PRODUCTS.filter((p) => p.category === 'keyring' && !p.addOnOnly)
 const TSHIRTS = PRODUCTS.filter((p) => p.category === 'tshirt')
 const SETS = PRODUCTS.filter((p) => p.category === 'set')
+const NAMETAG = getProduct(NAMETAG_ID)
 
 const samePick = (a: Pick, b: Pick) => a.productId === b.productId && a.size === b.size
 
@@ -41,24 +43,66 @@ export function ReserveForm() {
 
   // 단품 — 사이즈가 없는 상품은 값이 undefined인 채로 키만 들어간다
   const [singles, setSingles] = useState<Record<string, SizeId | undefined>>(() =>
-    preselected && preselected.category === 'keyring' ? { [preselected.id]: undefined } : {},
+    preselected && preselected.category === 'keyring' && !preselected.addOnOnly
+      ? { [preselected.id]: undefined }
+      : {},
   )
+  // 명찰 키링으로 담고 싶은 개수. 세트에 이미 들어간 몫은 여기 포함하지 않는다.
+  // 실제로 반영되는 값은 아래에서 상한에 맞춰 깎는다.
+  const [nametagWanted, setNametagWanted] = useState(0)
   // 세트 — 세트 id별로 고른 구성품
   const [sets, setSets] = useState<Record<string, Pick[]>>(() =>
     preselected && preselected.category === 'set' ? { [preselected.id]: [] } : {},
   )
 
+  /** 고르지 않아도 세트에 따라 들어가는 구성품 (명찰 키링 등) */
+  const fixedFromSets = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const setId of Object.keys(sets)) {
+      for (const id of getProduct(setId)?.fixedItems ?? []) {
+        counts.set(id, (counts.get(id) ?? 0) + 1)
+      }
+    }
+    return counts
+  }, [sets])
+
+  /** 담은 티셔츠 장수 — 명찰 키링은 티셔츠 1장당 1개까지 */
+  const tshirtCount = useMemo(() => {
+    const isTshirt = (id: string) => getProduct(id)?.category === 'tshirt'
+    const fromSingles = Object.keys(singles).filter(isTshirt).length
+    const fromSets = Object.values(sets)
+      .flat()
+      .filter((pick) => isTshirt(pick.productId)).length
+    return fromSingles + fromSets
+  }, [singles, sets])
+
+  const nametagInSets = fixedFromSets.get(NAMETAG_ID) ?? 0
+  /** 따로 더 담을 수 있는 명찰 키링 개수 — 티셔츠 장수와 남은 수량 중 작은 쪽 */
+  const maxNametagAddOn = Math.max(
+    0,
+    Math.min(tshirtCount - nametagInSets, stockFor(NAMETAG_ID) - nametagInSets),
+  )
+
+  /**
+   * 실제로 담기는 개수. 상한을 넘으면 깎아서 쓰되 원래 원하던 수는 남겨둔다.
+   * (세트를 열었다가 구성을 고르는 사이처럼 상한이 잠깐 0으로 내려가도
+   *  사용자가 담아둔 수량이 사라지지 않는다)
+   */
+  const nametagQty = Math.min(nametagWanted, maxNametagAddOn)
+
   /** 지금 담은 것들이 각 단위에서 몇 개를 쓰고 있는지 */
   const demand = useMemo(() => {
     const counts = new Map<string, number>()
-    const add = (productId: string, size?: SizeId) => {
+    const add = (productId: string, size?: SizeId, count = 1) => {
       const key = stockKey(productId, size)
-      counts.set(key, (counts.get(key) ?? 0) + 1)
+      counts.set(key, (counts.get(key) ?? 0) + count)
     }
     for (const [productId, size] of Object.entries(singles)) add(productId, size)
     for (const picks of Object.values(sets)) for (const pick of picks) add(pick.productId, pick.size)
+    for (const [productId, count] of fixedFromSets) add(productId, undefined, count)
+    if (nametagQty > 0) add(NAMETAG_ID, undefined, nametagQty)
     return counts
-  }, [singles, sets])
+  }, [singles, sets, fixedFromSets, nametagQty])
 
   const usedOf = (productId: string, size?: SizeId) =>
     demand.get(stockKey(productId, size)) ?? 0
@@ -158,15 +202,21 @@ export function ReserveForm() {
 
     const items: ReservationItem[] = [
       ...Object.entries(singles).map(([productId, size]) => ({ productId, size })),
-      ...Object.entries(sets).flatMap(([setId, picks]) =>
-        picks.map((pick) => ({ ...pick, viaSet: setId })),
-      ),
+      ...Object.entries(sets).flatMap(([setId, picks]) => [
+        ...picks.map((pick) => ({ ...pick, viaSet: setId })),
+        ...(getProduct(setId)?.fixedItems ?? []).map((productId) => ({ productId, viaSet: setId })),
+      ]),
+      ...Array.from({ length: nametagQty }, () => ({ productId: NAMETAG_ID })),
     ]
 
     const reservation = addReservation({
       name: name.trim(),
       contact: contact.trim(),
-      productIds: [...Object.keys(singles), ...Object.keys(sets)],
+      productIds: [
+        ...Object.keys(singles),
+        ...Object.keys(sets),
+        ...(nametagQty > 0 ? [NAMETAG_ID] : []),
+      ],
       items,
     })
     router.push(`/reserve/done?id=${reservation.id}`)
@@ -408,6 +458,53 @@ export function ReserveForm() {
             })}
           </ul>
         </section>
+
+        {/* ---- 추가 구성 ---- */}
+        {NAMETAG && (
+          <section className="reserve-section">
+            <h2 className="reserve-section__title">
+              추가 구성 <em>티셔츠와 함께만 담을 수 있어요</em>
+            </h2>
+
+            <div className={`addon-row${maxNametagAddOn === 0 ? ' off' : ''}`}>
+              <span className="addon-row__thumb">
+                <ProductThumb product={NAMETAG} className="addon-row__media" />
+              </span>
+              <div className="addon-row__info">
+                <p className="addon-row__name">{shortNameOf(NAMETAG)}</p>
+                <p className="addon-row__price">
+                  {formatPrice(NAMETAG.price)}
+                  <em>남은 {leftOf(NAMETAG_ID)}개</em>
+                </p>
+                <p className="addon-row__hint">
+                  {tshirtCount === 0
+                    ? '티셔츠를 담으면 함께 담을 수 있어요'
+                    : `티셔츠 ${tshirtCount}장 · 최대 ${maxNametagAddOn}개까지` +
+                      (nametagInSets > 0 ? ` (세트에 ${nametagInSets}개 포함)` : '')}
+                </p>
+              </div>
+              <div className="stepper">
+                <button
+                  type="button"
+                  aria-label="명찰 키링 한 개 빼기"
+                  disabled={nametagQty === 0}
+                  onClick={() => setNametagWanted(Math.max(0, nametagQty - 1))}
+                >
+                  −
+                </button>
+                <span className="stepper__value">{nametagQty}</span>
+                <button
+                  type="button"
+                  aria-label="명찰 키링 한 개 더 담기"
+                  disabled={nametagQty >= maxNametagAddOn}
+                  onClick={() => setNametagWanted(Math.min(maxNametagAddOn, nametagQty + 1))}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
 
         <label className="agree-row">
           <input
