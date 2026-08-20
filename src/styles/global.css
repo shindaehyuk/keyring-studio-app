@@ -2356,6 +2356,10 @@ img.reservation-card__media {
   font-size: 21px;
   font-weight: 800;
   letter-spacing: 0.02em;
+  /* 관리자 진입용으로 빠르게 여러 번 누르므로 글자 선택·탭 하이라이트를 막는다 */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .brand__mark {
