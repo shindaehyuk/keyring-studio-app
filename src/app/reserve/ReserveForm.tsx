@@ -24,6 +24,7 @@ import {
   type ReservationRow,
 } from '../../lib/reservations'
 import { EDIT_HANDOFF_KEY } from '../../lib/reservationEdit'
+import { totalPriceOfItems } from '../../lib/price'
 import { isSupabaseConfigured } from '../../lib/supabase'
 import { ProductThumb } from '../../components/ProductThumb'
 
@@ -70,6 +71,8 @@ export function ReserveForm() {
   const [password, setPassword] = useState('')
   const [agreed, setAgreed] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  /** 수정 중 나가려 할 때, 확인을 받으면 이동할 곳 */
+  const [leaveTo, setLeaveTo] = useState<string | null>(null)
 
   /** 예약 확인 화면에서 '수정'으로 넘어온 경우 그 예약 */
   const [editing] = useState<{ row: ReservationRow; credentials: ReservationCredentials } | null>(
@@ -99,6 +102,51 @@ export function ReserveForm() {
       alive = false
     }
   }, [])
+
+  /**
+   * 수정 화면을 떠나면 넘겨받은 예약을 지운다.
+   * 남겨두면 다음에 사전예약에 들어올 때 수정 모드로 잘못 들어간다.
+   */
+  useEffect(() => () => sessionStorage.removeItem(EDIT_HANDOFF_KEY), [])
+
+  // 수정 중에 다른 화면으로 나가려 하면 한 번 물어본다
+  useEffect(() => {
+    if (!editing) return
+
+    const onClick = (e: MouseEvent) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return
+      const anchor = (e.target as HTMLElement | null)?.closest?.('a[href]') as HTMLAnchorElement | null
+      const href = anchor?.getAttribute('href')
+      if (!href || href.startsWith('#')) return
+      e.preventDefault()
+      setLeaveTo(href)
+    }
+
+    // 뒤로가기로 바로 빠져나가지 않도록 기록을 한 칸 쌓아둔다
+    window.history.pushState(null, '', window.location.href)
+    const onPopState = () => {
+      window.history.pushState(null, '', window.location.href)
+      setLeaveTo('/my')
+    }
+    // 새로고침·탭 닫기는 브라우저 기본 확인창에 맡긴다
+    const onBeforeUnload = (e: BeforeUnloadEvent) => e.preventDefault()
+
+    document.addEventListener('click', onClick, true)
+    window.addEventListener('popstate', onPopState)
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => {
+      document.removeEventListener('click', onClick, true)
+      window.removeEventListener('popstate', onPopState)
+      window.removeEventListener('beforeunload', onBeforeUnload)
+    }
+  }, [editing])
+
+  const leaveNow = () => {
+    const target = leaveTo
+    setLeaveTo(null)
+    sessionStorage.removeItem(EDIT_HANDOFF_KEY)
+    if (target) router.push(target)
+  }
 
   const preselected = preselectedId ? getProduct(preselectedId) : undefined
   const prefill = editing ? splitItems(editing.row.items ?? []) : null
@@ -246,6 +294,32 @@ export function ReserveForm() {
 
   const selectedCount = Object.keys(singles).length + Object.keys(sets).length
 
+  /** 지금 담은 구성 — 금액 표시와 저장에 같은 값을 쓴다 */
+  const items = useMemo<ReservationItem[]>(
+    () => [
+      ...Object.entries(singles).map(([productId, size]) => ({ productId, size })),
+      ...Object.entries(sets).flatMap(([setId, picks]) =>
+        picks.map((pick) => ({ ...pick, viaSet: setId })),
+      ),
+      ...Array.from({ length: nametagQty }, () => ({ productId: NAMETAG_ID })),
+    ],
+    [singles, sets, nametagQty],
+  )
+
+  const totalPrice = totalPriceOfItems(items)
+
+  /** 금액 내역 — 세트는 구성품이 아니라 세트 값으로 한 줄 */
+  const priceLines = [
+    ...Object.keys(singles).map((id) => getProduct(id)).filter(Boolean),
+    ...Object.keys(sets).map((id) => getProduct(id)).filter(Boolean),
+  ].map((product) => ({ name: shortNameOf(product!), price: product!.price }))
+  if (nametagQty > 0 && NAMETAG) {
+    priceLines.push({
+      name: `${shortNameOf(NAMETAG)} × ${nametagQty}`,
+      price: NAMETAG.price * nametagQty,
+    })
+  }
+
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     if (submitting) return
@@ -282,14 +356,6 @@ export function ReserveForm() {
       }
     }
 
-    const items: ReservationItem[] = [
-      ...Object.entries(singles).map(([productId, size]) => ({ productId, size })),
-      ...Object.entries(sets).flatMap(([setId, picks]) =>
-        picks.map((pick) => ({ ...pick, viaSet: setId })),
-      ),
-      ...Array.from({ length: nametagQty }, () => ({ productId: NAMETAG_ID })),
-    ]
-
     const productIds = [
       ...Object.keys(singles),
       ...Object.keys(sets),
@@ -302,6 +368,7 @@ export function ReserveForm() {
         editing.credentials,
         items,
         productIds,
+        totalPrice,
       )
       setSubmitting(false)
       if (!updated.ok) {
@@ -320,6 +387,7 @@ export function ReserveForm() {
       password,
       productIds,
       items,
+      totalPrice,
     })
 
     const saved = await saveReservation(reservation)
@@ -427,7 +495,11 @@ export function ReserveForm() {
     <div className="page">
       <header className="page-header" style={{ paddingLeft: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <button className="icon-button" aria-label="뒤로가기" onClick={() => router.back()}>
+          <button
+            className="icon-button"
+            aria-label="뒤로가기"
+            onClick={() => (editing ? setLeaveTo('/my') : router.back())}
+          >
             <BackIcon size={22} />
           </button>
           <h1 className="page-header__title" style={{ fontSize: 19 }}>
@@ -660,6 +732,26 @@ export function ReserveForm() {
           </section>
         )}
 
+        {selectedCount > 0 && (
+          <section className="total-box">
+            <ul className="total-box__lines">
+              {priceLines.map((line) => (
+                <li key={line.name}>
+                  <span>{line.name}</span>
+                  <span>{formatPrice(line.price)}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="total-box__sum">
+              <span>전체 금액</span>
+              <strong>{formatPrice(totalPrice)}</strong>
+            </p>
+            <p className="total-box__note">
+              사전예약 단계에서는 결제하지 않아요. 금액은 수령하실 때 안내드립니다.
+            </p>
+          </section>
+        )}
+
         {!editing && (
         <label className="agree-row">
           <input
@@ -697,6 +789,33 @@ export function ReserveForm() {
           </button>
         )}
       </form>
+
+      {leaveTo && (
+        <div
+          className="modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="수정 취소 확인"
+          onClick={() => setLeaveTo(null)}
+        >
+          <div className="modal__panel" onClick={(e) => e.stopPropagation()}>
+            <p className="modal__title">수정을 취소하시겠습니까?</p>
+            <p className="modal__desc">
+              지금 나가면 바꾼 내용이 저장되지 않아요.
+              <br />
+              예약은 수정 전 상태로 그대로 남습니다.
+            </p>
+            <div className="modal__actions">
+              <button className="modal__button" onClick={() => setLeaveTo(null)}>
+                계속 수정하기
+              </button>
+              <button className="modal__button modal__button--danger" onClick={leaveNow}>
+                나가기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

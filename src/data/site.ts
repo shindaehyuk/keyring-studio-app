@@ -13,8 +13,8 @@ export interface PurposeItem {
 export const PURPOSE: PurposeItem[] = [
   {
     icon: 'pencil',
-    title: '직접 그리고 만들었어요',
-    desc: '캐릭터 디자인부터 제작까지, 수원교회 청년들이 함께 만든 굿즈예요.',
+    title: '직접 디자인했어요',
+    desc: '키링, 티셔츠 디자인을 청년회에서 만들었어요.',
   },
   {
     icon: 'offering',

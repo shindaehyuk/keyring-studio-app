@@ -24,7 +24,7 @@ export default function WishlistPage() {
             <br />
             마음에 드는 키링에 하트를 눌러보세요!
           </p>
-          <Link href="/collection" className="hero__cta" style={{ marginTop: 4 }}>
+          <Link href="/collection" className="empty-state__cta">
             컬렉션 구경하기
           </Link>
         </div>

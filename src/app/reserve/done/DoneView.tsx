@@ -6,6 +6,7 @@ import { KeyringArt } from '../../../art/KeyringArt'
 import { PURPOSE } from '../../../data/site'
 import { PurposeIcon } from '../../../components/PurposeIcon'
 import { summarizeReservation } from '../../../lib/reservationSummary'
+import { formatPrice } from '../../../data/products'
 import { useAppStore } from '../../../store/AppStore'
 
 export function DoneView() {
@@ -39,6 +40,10 @@ export function DoneView() {
                   <li key={line}>{line}</li>
                 ))}
               </ul>
+            </div>
+            <div className="done__row">
+              <span>전체 금액</span>
+              <strong>{formatPrice(reservation.totalPrice ?? 0)}</strong>
             </div>
           </div>
         )}

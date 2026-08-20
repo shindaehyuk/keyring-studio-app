@@ -20,6 +20,10 @@ create table if not exists public.reservations (
 alter table public.reservations
   add column if not exists password text;
 
+-- 예약 시점에 안내한 총 금액 (원). 나중에 값이 바뀌어도 그때 금액이 남는다
+alter table public.reservations
+  add column if not exists total_price integer not null default 0;
+
 create index if not exists reservations_created_at_idx
   on public.reservations (created_at desc);
 create index if not exists reservations_lookup_idx
@@ -111,6 +115,7 @@ returns table (
   phone_last4 text,
   items       jsonb,
   product_ids text[],
+  total_price integer,
   created_at  timestamptz
 )
 language sql
@@ -118,7 +123,7 @@ stable
 security definer
 set search_path = public, extensions
 as $$
-  select r.id, r.name, r.phone_last4, r.items, r.product_ids, r.created_at
+  select r.id, r.name, r.phone_last4, r.items, r.product_ids, r.total_price, r.created_at
     from public.reservations r
    where r.name = btrim(p_name)
      and r.phone_last4 = p_phone_last4
@@ -158,7 +163,8 @@ create or replace function public.update_reservation(
   p_phone_last4 text,
   p_password    text,
   p_items       jsonb,
-  p_product_ids text[]
+  p_product_ids text[],
+  p_total_price integer
 )
 returns boolean
 language plpgsql
@@ -170,7 +176,8 @@ declare
 begin
   update public.reservations r
      set items       = p_items,
-         product_ids = p_product_ids
+         product_ids = p_product_ids,
+         total_price = p_total_price
    where r.id = p_id
      and r.phone_last4 = p_phone_last4
      and r.password is not null
@@ -181,13 +188,14 @@ begin
 end;
 $$;
 
--- 예전 2-인자 취소 함수가 남아 있으면 정리한다
+-- 예전 시그니처가 남아 있으면 정리한다
 drop function if exists public.cancel_reservation(text, text);
+drop function if exists public.update_reservation(text, text, text, jsonb, text[]);
 
 revoke all on function public.find_reservations(text, text, text) from public;
 revoke all on function public.cancel_reservation(text, text, text) from public;
-revoke all on function public.update_reservation(text, text, text, jsonb, text[]) from public;
+revoke all on function public.update_reservation(text, text, text, jsonb, text[], integer) from public;
 
 grant execute on function public.find_reservations(text, text, text) to anon, authenticated;
 grant execute on function public.cancel_reservation(text, text, text) to anon, authenticated;
-grant execute on function public.update_reservation(text, text, text, jsonb, text[]) to anon, authenticated;
+grant execute on function public.update_reservation(text, text, text, jsonb, text[], integer) to anon, authenticated;
