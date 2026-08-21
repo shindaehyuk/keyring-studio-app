@@ -1818,6 +1818,101 @@ img.addon-row__media {
   }
 }
 
+/* ---------- 티셔츠 사이즈표 ---------- */
+.size-guide__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1.5px solid var(--color-line);
+  background: var(--color-bg);
+  color: var(--color-accent);
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.size-guide__panel {
+  max-width: 360px;
+}
+
+.size-guide__sub {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--color-sub);
+  text-align: center;
+}
+
+.size-guide__table-wrap {
+  margin-top: 14px;
+  overflow-x: auto;
+}
+
+.size-guide__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.size-guide__table th,
+.size-guide__table td {
+  padding: 9px 4px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.size-guide__table thead th {
+  border-bottom: 1.5px solid var(--color-line);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--color-sub);
+}
+
+.size-guide__table tbody tr + tr th,
+.size-guide__table tbody tr + tr td {
+  border-top: 1px solid var(--color-line);
+}
+
+.size-guide__table tbody th {
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+/* 호수(90 · 95 …)는 사이즈 이름보다 작게 */
+.size-guide__table tbody th em {
+  margin-left: 3px;
+  font-size: 10.5px;
+  font-weight: 500;
+  font-style: normal;
+  color: var(--color-faint);
+}
+
+.size-guide__note {
+  margin-top: 12px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--color-sub);
+  text-align: center;
+  word-break: keep-all;
+}
+
+/* 사이즈 고르는 줄 옆에 붙는 자리 */
+.reserve-section__label--with-guide {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.option-title--with-guide {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 /* ---------- 문의하기 (카카오톡 오픈채팅) ---------- */
 .contact-link {
   display: inline-flex;

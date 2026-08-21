@@ -33,6 +33,7 @@ import { isSupabaseConfigured } from '../../lib/supabase'
 import { ProductThumb } from '../../components/ProductThumb'
 import { ButtonSpinner, InlineLoading, LoadingOverlay } from '../../components/Loading'
 import { ContactButton } from '../../components/ContactButton'
+import { SizeGuide } from '../../components/SizeGuide'
 
 /** 낱개 하나를 고른 결과 */
 interface Pick {
@@ -775,7 +776,10 @@ export function ReserveForm() {
           </ul>
           {renderQtyRows(KEYRINGS.map((product) => ({ product })))}
 
-          <p className="reserve-section__label">티셔츠 · 사이즈를 골라주세요</p>
+          <p className="reserve-section__label reserve-section__label--with-guide">
+            티셔츠 · 사이즈를 골라주세요
+            <SizeGuide />
+          </p>
           <ul className="size-list">
             {TSHIRTS.map((product) => (
               <li key={product.id} className="size-row">
