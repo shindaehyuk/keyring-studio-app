@@ -10,6 +10,8 @@ export interface ReservationRow {
   items: ReservationItem[]
   product_ids: string[]
   total_price: number
+  /** 입금을 확인한 시각. 비어 있으면 아직 확인 전 (관리자만 본다) */
+  paid_at?: string | null
   created_at: string
 }
 
@@ -194,9 +196,25 @@ export async function fetchAllReservations() {
 
   const { data, error } = await supabase
     .from('reservations')
-    .select('id, name, phone_last4, items, product_ids, total_price, created_at')
+    .select('id, name, phone_last4, items, product_ids, total_price, paid_at, created_at')
     .order('created_at', { ascending: false })
 
   if (error) return { ok: false as const, message: error.message }
   return { ok: true as const, rows: (data ?? []) as ReservationRow[] }
+}
+
+/**
+ * 관리자용 입금 확인 표시.
+ * paid_at 한 칸에만 update 권한이 있어서, 다른 값은 실수로도 바뀌지 않는다.
+ * 확인한 시각을 그대로 돌려주므로 화면에서 다시 불러올 필요가 없다.
+ */
+export async function setReservationPaid(id: string, paid: boolean) {
+  const supabase = getSupabase()
+  if (!supabase) return { ok: false as const, message: 'Supabase가 연결되어 있지 않아요.' }
+
+  const paidAt = paid ? new Date().toISOString() : null
+  const { error } = await supabase.from('reservations').update({ paid_at: paidAt }).eq('id', id)
+
+  if (error) return { ok: false as const, message: error.message }
+  return { ok: true as const, paidAt }
 }

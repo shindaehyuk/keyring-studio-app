@@ -1557,16 +1557,20 @@ img.addon-row__media {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  /* 좁은 화면에서는 제목을 쪼개지 말고 버튼 줄을 아래로 내린다 */
+  flex-wrap: wrap;
 }
 
 .admin__title {
   font-size: 20px;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .admin__actions {
   display: flex;
   gap: 6px;
+  margin-left: auto;
 }
 
 .admin__button {
@@ -2166,6 +2170,64 @@ img.addon-row__media {
   font-size: 11.5px;
   font-weight: 600;
   color: #a33a3a;
+}
+
+/* ---------- 입금 확인 ---------- */
+.admin__paid {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 9px 0;
+  border-radius: 9px;
+  border: 1.5px solid var(--color-line);
+  background: var(--color-bg);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+/* 확인된 뒤에는 눌러서 되돌리는 버튼이라 조용하게 */
+.admin__paid.on {
+  border-color: transparent;
+  background: var(--color-mint);
+  font-weight: 600;
+  color: #2f6b4f;
+}
+
+.admin__paid:disabled {
+  opacity: 0.6;
+}
+
+/* 목록에서 입금된 예약을 한눈에 */
+.admin__card.paid {
+  border-color: #cfe6da;
+  background: #fbfefc;
+}
+
+.admin__paid-badge {
+  margin-left: 6px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--color-mint);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #2f6b4f;
+  vertical-align: 1px;
+  white-space: nowrap;
+}
+
+.admin__summary--paid {
+  margin-top: 4px;
+  font-size: 12.5px;
+}
+
+.admin__summary--paid em {
+  margin-left: 8px;
+  font-style: normal;
+  color: var(--color-faint);
 }
 
 /* ---------- 전체 금액 ---------- */

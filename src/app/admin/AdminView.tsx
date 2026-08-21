@@ -15,6 +15,7 @@ import {
 import {
   deleteReservationAsAdmin,
   fetchAllReservations,
+  setReservationPaid,
   type ReservationRow,
 } from '../../lib/reservations'
 import { getSupabase, isSupabaseConfigured } from '../../lib/supabase'
@@ -51,6 +52,8 @@ export function AdminView() {
   /** 삭제 확인 모달에 올라온 예약 */
   const [confirming, setConfirming] = useState<ReservationRow | null>(null)
   const [deleting, setDeleting] = useState(false)
+  /** 지금 입금 확인을 바꾸고 있는 예약 id */
+  const [marking, setMarking] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setBusy(true)
@@ -115,6 +118,25 @@ export function AdminView() {
     }
     setRows((prev) => (prev ?? []).filter((row) => row.id !== confirming.id))
     setConfirming(null)
+  }
+
+  /** 입금 확인을 켜고 끈다. 서버가 받아준 뒤에만 화면을 바꾼다 */
+  const togglePaid = async (row: ReservationRow) => {
+    if (marking) return
+    setMarking(row.id)
+    const result = await setReservationPaid(row.id, !row.paid_at)
+    setMarking(null)
+
+    if (!result.ok) {
+      setError(result.message)
+      return
+    }
+    setError(null)
+    setRows((prev) =>
+      (prev ?? []).map((item) =>
+        item.id === row.id ? { ...item, paid_at: result.paidAt } : item,
+      ),
+    )
   }
 
   /** 상품·사이즈 단위로 몇 개가 접수됐는지 */
@@ -218,6 +240,9 @@ export function AdminView() {
 
   const totalUnits = Array.from(totals.values()).reduce((sum, n) => sum + n, 0)
   const totalAmount = (rows ?? []).reduce((sum, row) => sum + (row.total_price ?? 0), 0)
+  const paidRows = (rows ?? []).filter((row) => row.paid_at)
+  const paidCount = paidRows.length
+  const paidAmount = paidRows.reduce((sum, row) => sum + (row.total_price ?? 0), 0)
 
   return (
     <div className="page admin">
@@ -247,6 +272,12 @@ export function AdminView() {
       <p className="admin__summary">
         예약 <strong>{rows?.length ?? 0}건</strong> · 굿즈 <strong>{totalUnits}개</strong> · 금액{' '}
         <strong>{formatPrice(totalAmount)}</strong>
+      </p>
+      <p className="admin__summary admin__summary--paid">
+        입금 확인 <strong>{paidCount}건</strong> · {formatPrice(paidAmount)}
+        <em>
+          미확인 {(rows?.length ?? 0) - paidCount}건 · {formatPrice(totalAmount - paidAmount)}
+        </em>
       </p>
 
       <h2 className="admin__section">품목별 접수 수량</h2>
@@ -281,28 +312,50 @@ export function AdminView() {
       {rows === null && busy && <InlineLoading message="예약을 불러오는 중…" />}
       {rows && rows.length === 0 && <p className="admin__empty">아직 접수된 예약이 없어요.</p>}
       <ul className="admin__list">
-        {(rows ?? []).map((row) => (
-          <li key={row.id} className="admin__card">
-            <div className="admin__card-head">
-              <strong>
-                {row.name} · {row.phone_last4}
-              </strong>
-              <span>{formatWhen(row.created_at)}</span>
-            </div>
-            <p className="admin__card-total">{formatPrice(row.total_price ?? 0)}</p>
-            <div className="admin__card-meta">
-              <p className="admin__card-id">{row.id}</p>
-              <button className="admin__delete" onClick={() => setConfirming(row)}>
-                삭제
+        {(rows ?? []).map((row) => {
+          const paid = Boolean(row.paid_at)
+          return (
+            <li key={row.id} className={`admin__card${paid ? ' paid' : ''}`}>
+              <div className="admin__card-head">
+                <strong>
+                  {row.name} · {row.phone_last4}
+                  {paid && <span className="admin__paid-badge">입금 확인</span>}
+                </strong>
+                <span>{formatWhen(row.created_at)}</span>
+              </div>
+              <p className="admin__card-total">{formatPrice(row.total_price ?? 0)}</p>
+              <div className="admin__card-meta">
+                <p className="admin__card-id">{row.id}</p>
+                <button className="admin__delete" onClick={() => setConfirming(row)}>
+                  삭제
+                </button>
+              </div>
+              <ul className="admin__card-items">
+                {describeItems(row).map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+
+              <button
+                className={`admin__paid${paid ? ' on' : ''}`}
+                disabled={marking === row.id}
+                aria-pressed={paid}
+                onClick={() => void togglePaid(row)}
+              >
+                {marking === row.id ? (
+                  <>
+                    <Spinner size={14} />
+                    바꾸는 중…
+                  </>
+                ) : paid ? (
+                  `입금 확인됨 · ${formatWhen(row.paid_at!)} (누르면 취소)`
+                ) : (
+                  '입금 확인'
+                )}
               </button>
-            </div>
-            <ul className="admin__card-items">
-              {describeItems(row).map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ul>
-          </li>
-        ))}
+            </li>
+          )
+        })}
       </ul>
 
       {confirming && (
