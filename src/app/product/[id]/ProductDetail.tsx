@@ -21,6 +21,7 @@ import { fetchReservedCounts } from '../../../lib/reservations'
 import { isSupabaseConfigured } from '../../../lib/supabase'
 import { useAppStore } from '../../../store/AppStore'
 import { ProductThumb } from '../../../components/ProductThumb'
+import { SizeGuide } from '../../../components/SizeGuide'
 
 export function ProductDetail({ product }: { product: Product }) {
   const router = useRouter()
@@ -141,7 +142,10 @@ export function ProductDetail({ product }: { product: Product }) {
 
         {product.sizeStock && (
           <>
-            <p className="option-title">사이즈별 남은 수량</p>
+            <p className="option-title option-title--with-guide">
+              사이즈별 남은 수량
+              <SizeGuide />
+            </p>
             <ul className="stock-grid">
               {sizesOf(product).map((size) => {
                 const left = leftOf(size)
