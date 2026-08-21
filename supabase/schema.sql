@@ -145,7 +145,7 @@ insert into public.product_stock (key, prepared) values
   ('bible-lion', 50),
   ('tshirt-1:S', 3),
   ('tshirt-1:M', 5),
-  ('tshirt-1:L', 10),
+  ('tshirt-1:L', 15),
   ('tshirt-1:XL', 10),
   ('tshirt-1:XXL', 2),
   ('tshirt-2:M', 5),
@@ -155,7 +155,7 @@ insert into public.product_stock (key, prepared) values
   ('tshirt-3:S', 3),
   ('tshirt-3:M', 5),
   ('tshirt-3:L', 15),
-  ('tshirt-3:XL', 10),
+  ('tshirt-3:XL', 5),
   ('tshirt-3:XXL', 2),
   ('nametag-keyring', 50)
 on conflict (key) do update set prepared = excluded.prepared;
