@@ -2612,7 +2612,8 @@ img.reservation-card__media {
   grid-template-columns: repeat(5, 1fr);
   gap: 6px;
   list-style: none;
-  margin: 0;
+  /* 위 제목줄(사이즈표 버튼이 들어가 키가 크다)과 붙지 않게 — 굿즈 정보 표와 같은 간격 */
+  margin: 12px 0 0;
   padding: 0;
 }
 
