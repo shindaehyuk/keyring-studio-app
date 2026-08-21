@@ -24,6 +24,10 @@ alter table public.reservations
 alter table public.reservations
   add column if not exists total_price integer not null default 0;
 
+-- 입금을 확인한 시각. 비어 있으면 아직 확인 전이다
+alter table public.reservations
+  add column if not exists paid_at timestamptz;
+
 create index if not exists reservations_created_at_idx
   on public.reservations (created_at desc);
 create index if not exists reservations_lookup_idx
@@ -82,6 +86,19 @@ create policy "signed in admins can delete reservations"
   to authenticated
   using (true);
 
+-- 관리자는 입금 확인만 표시할 수 있다.
+-- RLS로는 칸을 나눌 수 없어서, 아예 paid_at 한 칸에만 update 권한을 준다.
+-- (손님용 예약 수정은 security definer 함수가 소유자 권한으로 도니 영향이 없다)
+revoke update on public.reservations from anon, authenticated;
+grant update (paid_at) on public.reservations to authenticated;
+
+drop policy if exists "signed in admins can mark payment" on public.reservations;
+create policy "signed in admins can mark payment"
+  on public.reservations for update
+  to authenticated
+  using (true)
+  with check (true);
+
 -- ---------------------------------------------------------------
 -- 4. 남은 수량 계산용 집계 뷰
 --    개인정보는 넣지 않고 '무엇이 몇 개 나갔는지'만 공개한다.
@@ -128,7 +145,7 @@ insert into public.product_stock (key, prepared) values
   ('bible-lion', 50),
   ('tshirt-1:S', 3),
   ('tshirt-1:M', 5),
-  ('tshirt-1:L', 10),
+  ('tshirt-1:L', 15),
   ('tshirt-1:XL', 10),
   ('tshirt-1:XXL', 2),
   ('tshirt-2:M', 5),
@@ -138,7 +155,7 @@ insert into public.product_stock (key, prepared) values
   ('tshirt-3:S', 3),
   ('tshirt-3:M', 5),
   ('tshirt-3:L', 15),
-  ('tshirt-3:XL', 10),
+  ('tshirt-3:XL', 5),
   ('tshirt-3:XXL', 2),
   ('nametag-keyring', 50)
 on conflict (key) do update set prepared = excluded.prepared;
