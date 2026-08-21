@@ -54,6 +54,10 @@ export function AdminView() {
   const [deleting, setDeleting] = useState(false)
   /** 지금 입금 확인을 바꾸고 있는 예약 id */
   const [marking, setMarking] = useState<string | null>(null)
+  /** 예약 목록에서 보고 있는 묶음 */
+  const [tab, setTab] = useState<'all' | 'paid' | 'unpaid'>('all')
+  /** 이름 검색어 */
+  const [query, setQuery] = useState('')
 
   const load = useCallback(async () => {
     setBusy(true)
@@ -248,6 +252,20 @@ export function AdminView() {
   const paidRows = (rows ?? []).filter((row) => row.paid_at)
   const paidCount = paidRows.length
   const paidAmount = paidRows.reduce((sum, row) => sum + (row.total_price ?? 0), 0)
+  const unpaidCount = (rows?.length ?? 0) - paidCount
+
+  /**
+   * 목록에 보여줄 예약 — 탭과 검색어를 함께 건다.
+   * 이름은 띄어쓰기를 무시하고, 휴대폰 뒷자리·예약 번호로도 찾을 수 있다.
+   */
+  const needle = query.trim().toLowerCase().replace(/\s+/g, '')
+  const visibleRows = (rows ?? []).filter((row) => {
+    if (tab === 'paid' && !row.paid_at) return false
+    if (tab === 'unpaid' && row.paid_at) return false
+    if (!needle) return true
+    const haystack = `${row.name}${row.phone_last4}${row.id}`.toLowerCase().replace(/\s+/g, '')
+    return haystack.includes(needle)
+  })
 
   return (
     <div className="page admin">
@@ -322,10 +340,54 @@ export function AdminView() {
       </div>
 
       <h2 className="admin__section">예약 목록</h2>
+
+      <div className="admin__tabs" role="tablist" aria-label="입금 여부">
+        {(
+          [
+            ['all', '전체', rows?.length ?? 0],
+            ['unpaid', '미입금', unpaidCount],
+            ['paid', '입금 확인', paidCount],
+          ] as const
+        ).map(([id, label, count]) => (
+          <button
+            key={id}
+            role="tab"
+            aria-selected={tab === id}
+            className={`admin__tab${tab === id ? ' on' : ''}`}
+            onClick={() => setTab(id)}
+          >
+            {label}
+            <em>{count}</em>
+          </button>
+        ))}
+      </div>
+
+      <div className="admin__search">
+        <input
+          className="admin__search-input"
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="이름으로 찾기 (뒷자리·예약번호도 가능)"
+          aria-label="예약 검색"
+        />
+        {query && (
+          <button className="admin__search-clear" aria-label="검색어 지우기" onClick={() => setQuery('')}>
+            ×
+          </button>
+        )}
+      </div>
+
       {rows === null && busy && <InlineLoading message="예약을 불러오는 중…" />}
       {rows && rows.length === 0 && <p className="admin__empty">아직 접수된 예약이 없어요.</p>}
+      {rows && rows.length > 0 && visibleRows.length === 0 && (
+        <p className="admin__empty">
+          {/* 조사(와/과)를 피해 어떤 검색어에도 어색하지 않게 쓴다 */}
+          {needle ? `'${query.trim()}' 검색 결과가 없어요.` : '이 묶음에는 예약이 없어요.'}
+        </p>
+      )}
       <ul className="admin__list">
-        {(rows ?? []).map((row) => {
+        {visibleRows.map((row) => {
           const paid = Boolean(row.paid_at)
           return (
             <li key={row.id} className={`admin__card${paid ? ' paid' : ''}`}>
