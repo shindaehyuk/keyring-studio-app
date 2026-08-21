@@ -139,16 +139,21 @@ export function AdminView() {
     )
   }
 
-  /** 상품·사이즈 단위로 몇 개가 접수됐는지 */
-  const totals = useMemo(() => {
-    const counts = new Map<string, number>()
+  /**
+   * 상품·사이즈 단위 접수 수량.
+   * 전체와 함께 '입금이 확인되지 않은 몫'을 따로 센다.
+   */
+  const { totals, unpaidTotals } = useMemo(() => {
+    const all = new Map<string, number>()
+    const unpaid = new Map<string, number>()
     for (const row of rows ?? []) {
       for (const item of row.items ?? []) {
         const key = stockKey(item.productId, item.size)
-        counts.set(key, (counts.get(key) ?? 0) + 1)
+        all.set(key, (all.get(key) ?? 0) + 1)
+        if (!row.paid_at) unpaid.set(key, (unpaid.get(key) ?? 0) + 1)
       }
     }
-    return counts
+    return { totals: all, unpaidTotals: unpaid }
   }, [rows])
 
   if (!isSupabaseConfigured) {
@@ -281,24 +286,32 @@ export function AdminView() {
       </p>
 
       <h2 className="admin__section">품목별 접수 수량</h2>
+      <p className="admin__hint">
+        입금 = 입금 확인된 예약의 몫 · 미입금 = 아직 확인 전인 몫 (둘을 더하면 접수)
+      </p>
       <div className="admin__table-wrap">
         <table className="admin__table">
           <thead>
             <tr>
               <th>품목</th>
-              <th>접수</th>
-              <th>준비</th>
-              <th>남음</th>
+              <th className="num">접수</th>
+              <th className="num">입금</th>
+              <th className="num">미입금</th>
+              <th className="num">준비</th>
+              <th className="num">남음</th>
             </tr>
           </thead>
           <tbody>
             {unitRows.map((unit) => {
               const taken = totals.get(unit.key) ?? 0
+              const unpaid = unpaidTotals.get(unit.key) ?? 0
               const left = unit.prepared - taken
               return (
                 <tr key={unit.key} className={left <= 0 ? 'out' : undefined}>
                   <td>{unit.name}</td>
                   <td className="num">{taken}</td>
+                  <td className="num paid">{taken - unpaid}</td>
+                  <td className="num unpaid">{unpaid}</td>
                   <td className="num">{unit.prepared}</td>
                   <td className="num">{left}</td>
                 </tr>
