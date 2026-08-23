@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import {
   formatPrice,
@@ -18,6 +19,7 @@ import {
   setReservationPaid,
   type ReservationRow,
 } from '../../lib/reservations'
+import { EDIT_HANDOFF_KEY, type EditHandoff } from '../../lib/reservationEdit'
 import { getSupabase, isSupabaseConfigured } from '../../lib/supabase'
 import { ButtonSpinner, InlineLoading, LoadingOverlay, Spinner } from '../../components/Loading'
 
@@ -42,6 +44,7 @@ function describeItems(row: ReservationRow) {
 }
 
 export function AdminView() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [signedIn, setSignedIn] = useState(false)
@@ -54,6 +57,8 @@ export function AdminView() {
   const [deleting, setDeleting] = useState(false)
   /** 지금 입금 확인을 바꾸고 있는 예약 id */
   const [marking, setMarking] = useState<string | null>(null)
+  /** 수정 화면으로 넘어가는 중인 예약 id */
+  const [editingId, setEditingId] = useState<string | null>(null)
   /** 예약 목록에서 보고 있는 묶음 */
   const [tab, setTab] = useState<'all' | 'paid' | 'unpaid'>('all')
   /** 이름 검색어 */
@@ -122,6 +127,18 @@ export function AdminView() {
     }
     setRows((prev) => (prev ?? []).filter((row) => row.id !== confirming.id))
     setConfirming(null)
+  }
+
+  /**
+   * 사전예약 화면을 관리자 모드로 열어 구성을 고친다.
+   * 손님 수정과 같은 화면을 쓰되, 비밀번호 없이 저장하고 여기로 돌아온다.
+   */
+  const startEdit = (row: ReservationRow) => {
+    if (editingId) return
+    const handoff: EditHandoff = { row, asAdmin: true, backTo: '/admin' }
+    sessionStorage.setItem(EDIT_HANDOFF_KEY, JSON.stringify(handoff))
+    setEditingId(row.id)
+    router.push('/reserve')
   }
 
   /** 입금 확인을 켜고 끈다. 서버가 받아준 뒤에만 화면을 바꾼다 */
@@ -401,6 +418,13 @@ export function AdminView() {
               <p className="admin__card-total">{formatPrice(row.total_price ?? 0)}</p>
               <div className="admin__card-meta">
                 <p className="admin__card-id">{row.id}</p>
+                <button
+                  className="admin__edit"
+                  disabled={editingId !== null}
+                  onClick={() => startEdit(row)}
+                >
+                  수정
+                </button>
                 <button className="admin__delete" onClick={() => setConfirming(row)}>
                   삭제
                 </button>
@@ -472,7 +496,10 @@ export function AdminView() {
         </div>
       )}
 
-      <LoadingOverlay active={deleting} message="예약을 삭제하는 중…" />
+      <LoadingOverlay
+        active={deleting || editingId !== null}
+        message={deleting ? '예약을 삭제하는 중…' : '예약 수정 화면을 여는 중…'}
+      />
     </div>
   )
 }

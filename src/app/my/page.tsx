@@ -5,7 +5,6 @@ import { useState, type FormEvent } from 'react'
 import { KeyringArt } from '../../art/KeyringArt'
 import { formatPrice, getProduct, shortNameOf } from '../../data/products'
 import {
-  cancelReservationOnServer,
   findReservations,
   type ReservationCredentials,
   type ReservationRow,
@@ -49,9 +48,6 @@ export default function LookupPage() {
   const [searching, setSearching] = useState(false)
   const [rows, setRows] = useState<ReservationRow[] | null>(null)
   const [credentials, setCredentials] = useState<ReservationCredentials | null>(null)
-  /** 취소 확인 모달에 올라온 예약 */
-  const [confirming, setConfirming] = useState<ReservationRow | null>(null)
-  const [cancelling, setCancelling] = useState(false)
   /** 수정 화면으로 넘어가는 동안 */
   const [movingToEdit, setMovingToEdit] = useState(false)
 
@@ -75,24 +71,9 @@ export default function LookupPage() {
     setRows(result.rows)
   }
 
-  const confirmCancel = async () => {
-    if (!confirming || !credentials || cancelling) return
-    setCancelling(true)
-    const result = await cancelReservationOnServer(confirming.id, credentials)
-    setCancelling(false)
-
-    if (!result.ok) {
-      showToast('예약을 취소하지 못했어요. 잠시 후 다시 시도해주세요.')
-      return
-    }
-    setRows((prev) => (prev ?? []).filter((row) => row.id !== confirming.id))
-    setConfirming(null)
-    showToast('예약을 취소했어요.')
-  }
-
   const startEdit = (row: ReservationRow) => {
     if (!credentials || movingToEdit) return
-    sessionStorage.setItem(EDIT_HANDOFF_KEY, JSON.stringify({ row, credentials }))
+    sessionStorage.setItem(EDIT_HANDOFF_KEY, JSON.stringify({ row, credentials, backTo: '/my' }))
     setMovingToEdit(true)
     router.push('/reserve')
   }
@@ -187,8 +168,8 @@ export default function LookupPage() {
                       <span>전체 금액</span>
                       <strong>{formatPrice(row.total_price ?? 0)}</strong>
                     </p>
-                    <div className="reservation-card__actions">
-                      {canEdit && (
+                    {canEdit && (
+                      <div className="reservation-card__actions">
                         <button
                           className="reservation-card__edit"
                           disabled={movingToEdit}
@@ -196,14 +177,11 @@ export default function LookupPage() {
                         >
                           예약 수정
                         </button>
-                      )}
-                      <button
-                        className="reservation-card__cancel"
-                        onClick={() => setConfirming(row)}
-                      >
-                        예약 취소
-                      </button>
-                    </div>
+                      </div>
+                    )}
+                    <p className="reservation-card__note">
+                      예약 취소는 오픈채팅방으로 말씀해주세요.
+                    </p>
                   </li>
                 ))}
               </ul>
@@ -219,51 +197,10 @@ export default function LookupPage() {
       )}
 
       <LoadingOverlay
-        active={searching || cancelling || movingToEdit}
-        message={
-          cancelling
-            ? '예약을 취소하는 중…'
-            : movingToEdit
-              ? '예약 수정 화면을 여는 중…'
-              : '예약을 찾는 중…'
-        }
+        active={searching || movingToEdit}
+        message={movingToEdit ? '예약 수정 화면을 여는 중…' : '예약을 찾는 중…'}
       />
 
-      {confirming && (
-        <div
-          className="modal"
-          role="dialog"
-          aria-modal="true"
-          aria-label="예약 취소 확인"
-          onClick={() => !cancelling && setConfirming(null)}
-        >
-          <div className="modal__panel" onClick={(e) => e.stopPropagation()}>
-            <p className="modal__title">정말 예약을 취소하겠습니까?</p>
-            <p className="modal__desc">
-              취소하면 되돌릴 수 없어요.
-              <br />
-              같은 굿즈를 다시 담으려면 처음부터 신청해야 합니다.
-            </p>
-            <div className="modal__actions">
-              <button
-                className="modal__button"
-                disabled={cancelling}
-                onClick={() => setConfirming(null)}
-              >
-                돌아가기
-              </button>
-              <button
-                className="modal__button modal__button--danger"
-                disabled={cancelling}
-                onClick={() => void confirmCancel()}
-              >
-                {cancelling && <ButtonSpinner />}
-                {cancelling ? '취소하는 중…' : '예약 취소'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
