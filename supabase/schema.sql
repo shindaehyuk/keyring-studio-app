@@ -178,6 +178,7 @@ drop function if exists public.update_reservation(text, text, text, jsonb, text[
 drop function if exists public.update_reservation(text, text, text, jsonb, text[], integer);
 drop function if exists public.create_reservation(text, text, text, text, jsonb, text[], integer);
 drop function if exists public.short_of_stock(jsonb, text);
+drop function if exists public.admin_update_reservation(text, jsonb, text[], integer);
 
 -- 담으려는 구성이 남은 수량을 넘는지 본다.
 -- 넘으면 모자란 항목의 키('tshirt-1:L')를, 괜찮으면 null 을 준다.
@@ -301,30 +302,9 @@ as $$
    order by r.created_at desc;
 $$;
 
--- 예약 취소
-create or replace function public.cancel_reservation(
-  p_id          text,
-  p_phone_last4 text,
-  p_password    text
-)
-returns boolean
-language plpgsql
-security definer
-set search_path = public, extensions
-as $$
-declare
-  removed int;
-begin
-  delete from public.reservations r
-   where r.id = p_id
-     and r.phone_last4 = p_phone_last4
-     and r.password is not null
-     and r.password = crypt(p_password, r.password);
-
-  get diagnostics removed = row_count;
-  return removed > 0;
-end;
-$$;
+-- 예약 취소(cancel_reservation)는 더 이상 만들지 않는다.
+-- 손님이 스스로 예약을 지울 수 없게 막았고, 위쪽 drop 으로 예전 함수도 사라진다.
+-- 취소가 필요하면 관리자가 예약 관리에서 삭제한다.
 
 -- 예약 수정 — 고른 구성만 바꾼다
 create or replace function public.update_reservation(
@@ -366,13 +346,59 @@ begin
 end;
 $$;
 
-revoke all on function public.short_of_stock(jsonb, text) from public;
-revoke all on function public.find_reservations(text, text, text) from public;
-revoke all on function public.cancel_reservation(text, text, text) from public;
-revoke all on function public.create_reservation(text, text, text, text, jsonb, text[], integer) from public;
-revoke all on function public.update_reservation(text, text, text, jsonb, text[], integer) from public;
+-- 관리자용 수정 — 비밀번호 없이 구성을 바꾼다.
+-- 로그인한 세션(authenticated)에만 실행 권한을 주므로 손님은 부를 수 없다.
+-- 손님 수정과 똑같이 준비 수량을 확인하고, 모자라면 어떤 항목인지 알려준다.
+create or replace function public.admin_update_reservation(
+  p_id          text,
+  p_items       jsonb,
+  p_product_ids text[],
+  p_total_price integer
+)
+returns text
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  changed int;
+  short   text;
+begin
+  perform pg_advisory_xact_lock(hashtext('juice:reservation'));
+
+  short := public.short_of_stock(p_items, p_id);
+  if short is not null then
+    return 'sold_out:' || short;
+  end if;
+
+  update public.reservations r
+     set items       = p_items,
+         product_ids = p_product_ids,
+         total_price = p_total_price
+   where r.id = p_id;
+
+  get diagnostics changed = row_count;
+  if changed = 0 then
+    return 'not_found';
+  end if;
+  return 'ok';
+end;
+$$;
+
+-- 새로 만든 함수에는 anon·authenticated 실행 권한이 기본값으로 붙는다(Supabase 설정).
+-- public 에서만 거두면 그 기본 권한이 남으므로, 두 역할에서도 함께 거둔 뒤
+-- 아래에서 필요한 것만 다시 준다.
+revoke all on function public.short_of_stock(jsonb, text) from public, anon, authenticated;
+revoke all on function public.find_reservations(text, text, text) from public, anon, authenticated;
+revoke all on function public.create_reservation(text, text, text, text, jsonb, text[], integer)
+  from public, anon, authenticated;
+revoke all on function public.update_reservation(text, text, text, jsonb, text[], integer)
+  from public, anon, authenticated;
+revoke all on function public.admin_update_reservation(text, jsonb, text[], integer)
+  from public, anon, authenticated;
 
 grant execute on function public.find_reservations(text, text, text) to anon, authenticated;
-grant execute on function public.cancel_reservation(text, text, text) to anon, authenticated;
 grant execute on function public.create_reservation(text, text, text, text, jsonb, text[], integer) to anon, authenticated;
 grant execute on function public.update_reservation(text, text, text, jsonb, text[], integer) to anon, authenticated;
+-- 관리자 전용 — anon 에게는 주지 않는다
+grant execute on function public.admin_update_reservation(text, jsonb, text[], integer) to authenticated;

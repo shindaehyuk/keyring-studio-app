@@ -132,27 +132,8 @@ export async function findReservations(credentials: ReservationCredentials) {
   return { ok: true as const, rows: (data ?? []) as ReservationRow[] }
 }
 
-/**
- * 예약을 서버에서 지운다.
- * 예약 번호·휴대폰 뒷 4자리·비밀번호가 모두 맞아야 지워진다(서버 함수가 검사).
- */
-export async function cancelReservationOnServer(
-  id: string,
-  credentials: ReservationCredentials,
-) {
-  const supabase = getSupabase()
-  if (!supabase) return { ok: false as const, message: 'Supabase가 연결되어 있지 않아요.' }
-
-  const { data, error } = await supabase.rpc('cancel_reservation', {
-    p_id: id,
-    p_phone_last4: credentials.phoneLast4,
-    p_password: credentials.password,
-  })
-
-  if (error) return { ok: false as const, message: error.message }
-  if (data === false) return { ok: false as const, message: '예약을 찾지 못했어요.' }
-  return { ok: true as const }
-}
+// 손님이 스스로 예약을 취소하는 길은 없앴다.
+// 서버에서도 cancel_reservation 함수를 지웠고, 취소는 관리자가 삭제로만 한다.
 
 /** 고른 구성만 바꾼다. 본인 확인 값이 맞아야 한다 */
 export async function updateReservationOnServer(
@@ -176,6 +157,35 @@ export async function updateReservationOnServer(
 
   if (error) return { ok: false as const, message: error.message }
   if (data === false) return { ok: false as const, message: '예약을 찾지 못했어요.' }
+  return { ok: true as const }
+}
+
+/**
+ * 관리자용 수정 — 비밀번호 없이 구성을 바꾼다.
+ * 로그인한 세션만 실행할 수 있고, 손님 수정과 같은 수량 검사를 거친다.
+ */
+export async function updateReservationAsAdmin(
+  id: string,
+  items: ReservationItem[],
+  productIds: string[],
+  totalPrice: number,
+) {
+  const supabase = getSupabase()
+  if (!supabase) return { ok: false as const, message: 'Supabase가 연결되어 있지 않아요.' }
+
+  const { data, error } = await supabase.rpc('admin_update_reservation', {
+    p_id: id,
+    p_items: items,
+    p_product_ids: productIds,
+    p_total_price: totalPrice,
+  })
+
+  if (error) return { ok: false as const, message: error.message }
+  const result = typeof data === 'string' ? data : ''
+  if (result.startsWith('sold_out:')) {
+    return { ok: false as const, soldOutKey: result.slice('sold_out:'.length), message: '남은 수량이 부족해요.' }
+  }
+  if (result !== 'ok') return { ok: false as const, message: '예약을 찾지 못했어요.' }
   return { ok: true as const }
 }
 

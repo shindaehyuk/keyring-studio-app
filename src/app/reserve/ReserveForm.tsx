@@ -21,11 +21,10 @@ import { buildReservation, useAppStore, type ReservationItem } from '../../store
 import {
   fetchReservedCounts,
   saveReservation,
+  updateReservationAsAdmin,
   updateReservationOnServer,
-  type ReservationCredentials,
-  type ReservationRow,
 } from '../../lib/reservations'
-import { EDIT_HANDOFF_KEY } from '../../lib/reservationEdit'
+import { EDIT_HANDOFF_KEY, type EditHandoff } from '../../lib/reservationEdit'
 import { totalPriceOfItems } from '../../lib/price'
 import { usePreorderOpen } from '../../lib/usePreorderOpen'
 import { isPreorderOpen, LAUNCH_LABEL } from '../../data/site'
@@ -90,18 +89,19 @@ export function ReserveForm() {
   /** 수정 중 나가려 할 때, 확인을 받으면 이동할 곳 */
   const [leaveTo, setLeaveTo] = useState<string | null>(null)
 
-  /** 예약 확인 화면에서 '수정'으로 넘어온 경우 그 예약 */
-  const [editing] = useState<{ row: ReservationRow; credentials: ReservationCredentials } | null>(
-    () => {
-      if (typeof window === 'undefined') return null
-      try {
-        const raw = sessionStorage.getItem(EDIT_HANDOFF_KEY)
-        return raw ? JSON.parse(raw) : null
-      } catch {
-        return null
-      }
-    },
-  )
+  /** 예약 확인·관리자 화면에서 '수정'으로 넘어온 경우 그 예약 */
+  const [editing] = useState<EditHandoff | null>(() => {
+    if (typeof window === 'undefined') return null
+    try {
+      const raw = sessionStorage.getItem(EDIT_HANDOFF_KEY)
+      return raw ? (JSON.parse(raw) as EditHandoff) : null
+    } catch {
+      return null
+    }
+  })
+
+  /** 수정을 마치거나 그만뒀을 때 돌아갈 곳 */
+  const backTo = editing?.backTo ?? '/my'
 
   /**
    * 이미 접수된 수량. Supabase가 연결돼 있으면 실제 접수분을 빼고 보여주고,
@@ -146,7 +146,7 @@ export function ReserveForm() {
     window.history.pushState(null, '', window.location.href)
     const onPopState = () => {
       window.history.pushState(null, '', window.location.href)
-      setLeaveTo('/my')
+      setLeaveTo(backTo)
     }
     // 새로고침·탭 닫기는 브라우저 기본 확인창에 맡긴다
     const onBeforeUnload = (e: BeforeUnloadEvent) => e.preventDefault()
@@ -376,8 +376,8 @@ export function ReserveForm() {
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     if (submitting) return
-    // 보고 있는 사이에 마감 시각이 지난 경우
-    if (!isPreorderOpen()) return showToast('사전예약이 마감됐어요.')
+    // 보고 있는 사이에 마감 시각이 지난 경우 (관리자 수정은 마감 뒤에도 할 수 있다)
+    if (!isPreorderOpen() && !editing?.asAdmin) return showToast('사전예약이 마감됐어요.')
     if (!editing) {
       if (!name.trim()) return showToast('이름을 입력해주세요!')
       if (!/^\d{4}$/.test(phoneLast4)) return showToast('휴대폰 뒷 4자리를 입력해주세요!')
@@ -418,13 +418,18 @@ export function ReserveForm() {
     ]
 
     if (editing) {
-      const updated = await updateReservationOnServer(
-        editing.row.id,
-        editing.credentials,
-        items,
-        productIds,
-        totalPrice,
-      )
+      const updated = editing.asAdmin
+        ? await updateReservationAsAdmin(editing.row.id, items, productIds, totalPrice)
+        : editing.credentials
+          ? await updateReservationOnServer(
+              editing.row.id,
+              editing.credentials,
+              items,
+              productIds,
+              totalPrice,
+            )
+          : { ok: false as const, message: '본인 확인 정보가 없어요.' }
+
       if (!updated.ok) {
         setSubmitting(false)
         showToast('예약을 수정하지 못했어요. 남은 수량이 찼거나 잠시 문제가 생겼어요.')
@@ -435,7 +440,7 @@ export function ReserveForm() {
       // 성공하면 화면을 옮길 때까지 로딩을 그대로 둔다 (중간에 빈 화면이 보이지 않게)
       sessionStorage.removeItem(EDIT_HANDOFF_KEY)
       showToast('예약을 수정했어요.')
-      router.push('/my')
+      router.push(backTo)
       return
     }
 
@@ -603,7 +608,7 @@ export function ReserveForm() {
   }
 
   /** 마감 여부를 아직 모르는 첫 순간 — 폼을 보여줬다 닫으면 어수선하다 */
-  if (preorderOpen === null) {
+  if (preorderOpen === null && !editing?.asAdmin) {
     return (
       <div className="page">
         <InlineLoading message="사전예약 접수 상태를 확인하는 중…" />
@@ -611,7 +616,7 @@ export function ReserveForm() {
     )
   }
 
-  if (!preorderOpen) {
+  if (!preorderOpen && !editing?.asAdmin) {
     return (
       <div className="page">
         <header className="page-header" style={{ paddingLeft: 8 }}>
@@ -653,12 +658,12 @@ export function ReserveForm() {
           <button
             className="icon-button"
             aria-label="뒤로가기"
-            onClick={() => (editing ? setLeaveTo('/my') : router.back())}
+            onClick={() => (editing ? setLeaveTo(backTo) : router.back())}
           >
             <BackIcon size={22} />
           </button>
           <h1 className="page-header__title" style={{ fontSize: 19 }}>
-            {editing ? '예약 수정' : '사전예약'}
+            {editing ? (editing.asAdmin ? '예약 수정 (관리자)' : '예약 수정') : '사전예약'}
           </h1>
         </div>
       </header>
@@ -947,7 +952,7 @@ export function ReserveForm() {
             className="reserve-form__cancel-edit"
             onClick={() => {
               sessionStorage.removeItem(EDIT_HANDOFF_KEY)
-              router.push('/my')
+              router.push(backTo)
             }}
           >
             수정 그만두기
