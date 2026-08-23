@@ -15,6 +15,7 @@ import {
   stockFor,
   stockKey,
   type Product,
+  type SetChoice,
   type SizeId,
 } from '../../data/products'
 import { buildReservation, useAppStore, type ReservationItem } from '../../store/AppStore'
@@ -303,27 +304,53 @@ export function ReserveForm() {
     })
   }
 
-  /** 세트 안에서 구성품 하나를 넣거나 뺀다. 같은 상품은 세트당 한 번만 고를 수 있다 */
-  const toggleSetPick = (set: Product, pick: Pick, limit: number, label: string) => {
+  /** 세트 안에서 같은 구성을 몇 개 담았는지 */
+  const setPickQty = (setId: string, pick: Pick) =>
+    (sets[setId] ?? []).filter((p) => samePick(p, pick)).length
+
+  /** 세트에 구성 하나를 더 담는다 */
+  const addSetPick = (set: Product, pick: Pick, choice: SetChoice) => {
     setSets((prev) => {
       const picks = prev[set.id] ?? []
-      const existing = picks.find((p) => p.productId === pick.productId)
+      // 중복을 허용하지 않는 세트에서는 같은 상품을 다시 고르면 사이즈만 바뀐다
+      const rest = choice.allowDuplicates ? picks : picks.filter((p) => p.productId !== pick.productId)
 
-      if (existing && samePick(existing, pick)) {
-        return { ...prev, [set.id]: picks.filter((p) => p.productId !== pick.productId) }
-      }
-      if (!existing && picks.length >= limit) {
-        showToast(`${label}까지 고를 수 있어요.`)
+      if (rest.length >= choice.count) {
+        showToast(`${choice.label}까지 고를 수 있어요.`)
         return prev
       }
-      // 같은 상품의 사이즈만 바꾸는 경우에는 자리 수를 늘리지 않는다
       if (leftOf(pick.productId, pick.size) <= 0) {
         showToast('남은 수량이 없는 구성이에요.')
         return prev
       }
-      const rest = picks.filter((p) => p.productId !== pick.productId)
       return { ...prev, [set.id]: [...rest, pick] }
     })
+  }
+
+  /** 세트에서 같은 구성 하나를 뺀다 */
+  const removeSetPick = (set: Product, pick: Pick) => {
+    setSets((prev) => {
+      const picks = prev[set.id] ?? []
+      const index = picks.findIndex((p) => samePick(p, pick))
+      if (index < 0) return prev
+      return { ...prev, [set.id]: [...picks.slice(0, index), ...picks.slice(index + 1)] }
+    })
+  }
+
+  /**
+   * 칩·카드를 누르면 담기/빼기. 담은 것을 다시 누르면 그 구성을 통째로 뺀다.
+   * 같은 구성을 두 개 이상 담는 것은 아래 개수 조절기에서 한다. (단품과 같은 방식)
+   */
+  const toggleSetPick = (set: Product, pick: Pick, choice: SetChoice) => {
+    const qty = setPickQty(set.id, pick)
+    if (qty > 0) {
+      setSets((prev) => ({
+        ...prev,
+        [set.id]: (prev[set.id] ?? []).filter((p) => !samePick(p, pick)),
+      }))
+      return
+    }
+    addSetPick(set, pick, choice)
   }
 
   const missingInSet = (set: Product) => {
@@ -548,6 +575,58 @@ export function ReserveForm() {
     )
   }
 
+  /**
+   * 세트에 담은 구성의 개수 조절기.
+   * 같은 구성을 두 장 담을 수 있는 세트에서, 담은 것마다 한 줄씩 보여준다.
+   */
+  const renderSetQtyRows = (set: Product, choice: SetChoice) => {
+    const picks = sets[set.id] ?? []
+    if (picks.length === 0) return null
+
+    // 담은 순서대로, 같은 구성은 한 줄로 묶는다
+    const rows = new Map<string, { pick: Pick; qty: number }>()
+    for (const pick of picks) {
+      const key = stockKey(pick.productId, pick.size)
+      const row = rows.get(key)
+      if (row) row.qty += 1
+      else rows.set(key, { pick, qty: 1 })
+    }
+
+    const full = picks.length >= choice.count
+    return (
+      <ul className="qty-list">
+        {Array.from(rows, ([key, { pick, qty }]) => {
+          const product = getProduct(pick.productId)
+          if (!product) return null
+          const label = `${shortNameOf(product)}${pick.size ? ` (${pick.size})` : ''}`
+          return (
+            <li key={key} className="qty-row">
+              <span className="qty-row__name">{label}</span>
+              <div className="stepper">
+                <button
+                  type="button"
+                  aria-label={`${label} 한 개 빼기`}
+                  onClick={() => removeSetPick(set, pick)}
+                >
+                  −
+                </button>
+                <span className="stepper__value">{qty}</span>
+                <button
+                  type="button"
+                  aria-label={`${label} 한 개 더 담기`}
+                  disabled={!choice.allowDuplicates || full || leftOf(pick.productId, pick.size) <= 0}
+                  onClick={() => addSetPick(set, pick, choice)}
+                >
+                  +
+                </button>
+              </div>
+            </li>
+          )
+        })}
+      </ul>
+    )
+  }
+
   /** 세트 안에서 고르는 구성품 목록 */
   const renderChoices = (set: Product) => {
     const picks = sets[set.id] ?? []
@@ -563,10 +642,12 @@ export function ReserveForm() {
                   {picks.length} / {choice.count}
                 </em>
               </p>
+              {choice.allowDuplicates && (
+                <p className="set-picker__note">같은 디자인·사이즈도 여러 장 담을 수 있어요.</p>
+              )}
               {choice.from.map((productId) => {
                 const product = getProduct(productId)
                 if (!product) return null
-                const picked = picks.find((p) => p.productId === productId)
 
                 if (product.sizeStock) {
                   return (
@@ -574,13 +655,14 @@ export function ReserveForm() {
                       <span className="option-line__name">{shortNameOf(product)}</span>
                       {renderSizeChips(
                         product,
-                        (size) => picked?.size === size,
-                        (size) => toggleSetPick(set, { productId, size }, choice.count, label),
+                        (size) => setPickQty(set.id, { productId, size }) > 0,
+                        (size) => toggleSetPick(set, { productId, size }, choice),
                       )}
                     </div>
                   )
                 }
 
+                const picked = setPickQty(set.id, { productId }) > 0
                 const left = shownLeftOf(productId)
                 const soldOut = !picked && leftOf(productId) <= 0
                 return (
@@ -589,8 +671,8 @@ export function ReserveForm() {
                     type="button"
                     className={`option-chip${picked ? ' picked' : ''}`}
                     disabled={soldOut}
-                    aria-pressed={Boolean(picked)}
-                    onClick={() => toggleSetPick(set, { productId }, choice.count, label)}
+                    aria-pressed={picked}
+                    onClick={() => toggleSetPick(set, { productId }, choice)}
                   >
                     <span className="option-chip__thumb">
                       <ProductThumb product={product} className="option-chip__media" />
@@ -600,6 +682,7 @@ export function ReserveForm() {
                   </button>
                 )
               })}
+              {renderSetQtyRows(set, choice)}
             </div>
           )
         })}

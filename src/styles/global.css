@@ -1400,6 +1400,14 @@ img.set-picker__media {
   color: var(--color-accent);
 }
 
+/* 중복으로 담을 수 있는 세트에 붙는 짧은 안내 */
+.set-picker__note {
+  margin: -4px 0 8px;
+  font-size: 11.5px;
+  color: var(--color-faint);
+  word-break: keep-all;
+}
+
 .set-picker__warn {
   margin-top: 10px;
   font-size: 12px;
