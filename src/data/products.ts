@@ -47,6 +47,8 @@ export interface SetChoice {
   /** 몇 개를 골라야 하는지 */
   count: number
   label: string
+  /** 같은 구성을 두 번 이상 고를 수 있는지 (티셔츠 세트) */
+  allowDuplicates?: boolean
 }
 
 export interface Product {
@@ -338,15 +340,16 @@ export const PRODUCTS: Product[] = [
     originalPrice: 36000,
     description: [
       '말씀 티셔츠 3종 중 2개를 골라 담는 세트예요.',
+      '같은 디자인을 사이즈만 달리해 두 장 담아도 좋아요.',
       '낱개로 살 때보다 1,000원 저렴해요!',
     ],
     category: 'set',
     bg: 'var(--color-cream)',
     photos: ['/tshirt-1.webp', '/tshirt-2.webp'],
     items: TSHIRT_ITEMS.map((productId) => ({ productId, note: '택 2' })),
-    choices: [{ from: TSHIRT_ITEMS, count: 2, label: '티셔츠 2개' }],
+    choices: [{ from: TSHIRT_ITEMS, count: 2, label: '티셔츠 2개', allowDuplicates: true }],
     specs: [
-      { label: '구성', value: '티셔츠 2개 (3종 중 택 2)' },
+      { label: '구성', value: '티셔츠 2개 (3종 중 택 2 · 같은 디자인 중복 가능)' },
       { label: '낱개 가격', value: '티셔츠 1개 18,000원' },
       { label: '할인', value: '1,000원' },
     ],
@@ -357,16 +360,17 @@ export const PRODUCTS: Product[] = [
     price: 52000,
     originalPrice: 54000,
     description: [
-      '말씀 티셔츠 3종을 모두 담은 세트예요.',
+      '말씀 티셔츠를 3장 담는 세트예요.',
+      '3종을 모두 담아도, 같은 디자인을 여러 장 담아도 괜찮아요.',
       '낱개로 살 때보다 2,000원 저렴해요!',
     ],
     category: 'set',
     bg: 'var(--color-pink)',
     photos: ['/tshirt-1.webp', '/tshirt-2.webp', '/tshirt-3.webp'],
     items: TSHIRT_ITEMS.map((productId) => ({ productId })),
-    choices: [{ from: TSHIRT_ITEMS, count: 3, label: '티셔츠 3개' }],
+    choices: [{ from: TSHIRT_ITEMS, count: 3, label: '티셔츠 3개', allowDuplicates: true }],
     specs: [
-      { label: '구성', value: '티셔츠 3개 (3종 전부)' },
+      { label: '구성', value: '티셔츠 3개 (3종 중 택 3 · 같은 디자인 중복 가능)' },
       { label: '낱개 가격', value: '티셔츠 1개 18,000원' },
       { label: '할인', value: '2,000원' },
     ],
